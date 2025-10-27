@@ -1,0 +1,40 @@
+import type { User } from "./types"
+
+export const mockUsers: User[] = [
+  {
+    id: "user-1",
+    email: "john@example.com",
+    password: "hashed_password_1",
+    name: "John Doe",
+    profileImage: "/diverse-group-profile.png",
+    phone: "+1-555-0101",
+    bio: "Travel enthusiast and apartment hunter",
+    role: "renter",
+    createdAt: new Date("2024-01-01"),
+    updatedAt: new Date("2024-10-20"),
+  },
+  {
+    id: "host-1",
+    email: "sarah@example.com",
+    password: "hashed_password_2",
+    name: "Sarah Johnson",
+    profileImage: "/host-profile.jpg",
+    phone: "+1-555-0102",
+    bio: "Professional property manager with 5+ years experience",
+    role: "host",
+    createdAt: new Date("2023-06-15"),
+    updatedAt: new Date("2024-10-20"),
+  },
+  {
+    id: "host-2",
+    email: "mike@example.com",
+    password: "hashed_password_3",
+    name: "Mike Chen",
+    profileImage: "/host-profile.jpg",
+    phone: "+1-555-0103",
+    bio: "Passionate about hospitality",
+    role: "host",
+    createdAt: new Date("2024-03-20"),
+    updatedAt: new Date("2024-10-20"),
+  },
+]

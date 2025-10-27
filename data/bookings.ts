@@ -1,0 +1,48 @@
+import type { Booking } from "./types"
+
+export const mockBookings: Booking[] = [
+  {
+    id: "booking-1",
+    listingId: "listing-1",
+    renterId: "user-1",
+    hostId: "host-1",
+    checkInDate: new Date("2024-09-10"),
+    checkOutDate: new Date("2024-09-15"),
+    numberOfGuests: 2,
+    totalPrice: 825,
+    priceBreakdown: {
+      nightlyRate: 150,
+      nights: 5,
+      subtotal: 750,
+      cleaningFee: 50,
+      serviceFee: 25,
+      total: 825,
+    },
+    status: "completed",
+    paymentStatus: "completed",
+    createdAt: new Date("2024-09-01"),
+    updatedAt: new Date("2024-09-15"),
+  },
+  {
+    id: "booking-2",
+    listingId: "listing-1",
+    renterId: "user-2",
+    hostId: "host-1",
+    checkInDate: new Date("2024-10-20"),
+    checkOutDate: new Date("2024-10-25"),
+    numberOfGuests: 3,
+    totalPrice: 1025,
+    priceBreakdown: {
+      nightlyRate: 150,
+      nights: 5,
+      subtotal: 750,
+      cleaningFee: 50,
+      serviceFee: 25,
+      total: 825,
+    },
+    status: "confirmed",
+    paymentStatus: "completed",
+    createdAt: new Date("2024-10-15"),
+    updatedAt: new Date("2024-10-20"),
+  },
+]
