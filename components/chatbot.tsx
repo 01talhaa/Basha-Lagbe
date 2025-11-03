@@ -18,7 +18,7 @@ export default function Chatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hi! I'm your ApartmentHub assistant. I can help you find the perfect apartment. What are you looking for?",
+      text: "Hi! I'm your Basha Lagbe assistant. I can help you find the perfect apartment. What are you looking for?",
       sender: "bot",
       timestamp: new Date(),
     },
@@ -163,7 +163,7 @@ export default function Chatbot() {
         <div className="fixed bottom-24 right-6 w-96 h-96 bg-white rounded-lg shadow-2xl flex flex-col z-40 border border-neutral-200">
           {/* Header */}
           <div className="bg-primary text-white p-4 rounded-t-lg">
-            <h3 className="font-semibold">ApartmentHub Assistant</h3>
+            <h3 className="font-semibold">Basha Lagbe Assistant</h3>
             <p className="text-sm text-neutral-100">Powered by AI</p>
           </div>
 

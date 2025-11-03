@@ -12,7 +12,7 @@ export async function POST(request: Request) {
 
     const model = genAI.getGenerativeModel({ model: "gemini-pro" })
 
-    const prompt = `You are an apartment rental assistant for ApartmentHub. Your job is to understand what apartment the user is looking for and extract search parameters.
+    const prompt = `You are an apartment rental assistant for Basha Lagbe. Your job is to understand what apartment the user is looking for and extract search parameters.
 
 User query: "${query}"
 

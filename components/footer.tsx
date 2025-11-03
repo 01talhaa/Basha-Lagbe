@@ -11,7 +11,7 @@ export default function Footer() {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold">A</span>
               </div>
-              <span className="font-bold text-lg">ApartmentHub</span>
+              <span className="font-bold text-lg">Basha Lagbe</span>
             </div>
             <p className="text-neutral-400 text-sm">Find your perfect apartment worldwide</p>
           </div>
@@ -84,7 +84,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-neutral-800 pt-8">
-          <p className="text-center text-neutral-400 text-sm">© 2025 ApartmentHub. All rights reserved.</p>
+          <p className="text-center text-neutral-400 text-sm">© 2025 Basha Lagbe. All rights reserved.</p>
         </div>
       </div>
     </footer>

@@ -19,7 +19,7 @@ export default function HomepageChatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hey there! 👋 I'm your ApartmentHub assistant. I can help you find the perfect apartment for your long-term stay. Just tell me what you're looking for - like your budget, preferred location, number of bedrooms, or any specific amenities you need. What's your ideal apartment?",
+      text: "Hey there! 👋 I'm your Basha Lagbe assistant. I can help you find the perfect apartment for your long-term stay. Just tell me what you're looking for - like your budget, preferred location, number of bedrooms, or any specific amenities you need. What's your ideal apartment?",
       sender: "bot",
       timestamp: new Date(),
     },
@@ -190,7 +190,7 @@ export default function HomepageChatbot() {
         <div className="fixed bottom-24 right-6 w-96 max-h-[600px] bg-white rounded-lg shadow-2xl flex flex-col z-40 border border-neutral-200">
           {/* Header */}
           <div className="bg-primary text-white p-4 rounded-t-lg">
-            <h3 className="font-semibold">ApartmentHub Assistant</h3>
+            <h3 className="font-semibold">Basha Lagbe Assistant</h3>
             <p className="text-sm text-neutral-100">Find your perfect apartment</p>
           </div>
 

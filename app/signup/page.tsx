@@ -53,7 +53,7 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-lg shadow-md p-8">
           <h1 className="text-3xl font-bold mb-2">Create Account</h1>
-          <p className="text-neutral-600 mb-8">Join ApartmentHub today</p>
+          <p className="text-neutral-600 mb-8">Join Basha Lagbe today</p>
 
           {error && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>

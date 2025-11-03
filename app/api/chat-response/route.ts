@@ -12,7 +12,7 @@ export async function POST(request: Request) {
 
     const model = genAI.getGenerativeModel({ model: "gemini-pro" })
 
-    const prompt = `You are a friendly and helpful ApartmentHub assistant. A user just asked about finding apartments. Generate a SHORT, natural, conversational response (1-2 sentences max) that acknowledges their request and tells them you found listings.
+    const prompt = `You are a friendly and helpful Basha Lagbe assistant. A user just asked about finding apartments. Generate a SHORT, natural, conversational response (1-2 sentences max) that acknowledges their request and tells them you found listings.
 
 User query: "${query}"
 Number of listings found: ${listingCount}
