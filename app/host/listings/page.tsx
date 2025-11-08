@@ -2,43 +2,52 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { getListings } from "@/lib/api-utils"
 import type { Listing } from "@/data/types"
 
 export default function HostListingsPage() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const { data: session, status } = useSession()
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const userData = localStorage.getItem("user")
-    if (!userData) {
+    if (status === "unauthenticated") {
       router.push("/login")
       return
     }
 
-    const parsedUser = JSON.parse(userData)
-    if (parsedUser.role !== "host") {
-      router.push("/dashboard")
-      return
+    if (status === "authenticated") {
+      // Redirect renters to their dashboard
+      if (session?.user?.role === "renter") {
+        router.push("/dashboard")
+        return
+      }
+
+      // Simulate fetching host listings
+      const fetchListings = async () => {
+        const allListings = await getListings()
+        // Filter to host's listings (in real app, would filter by hostId)
+        setListings(allListings.slice(0, 2))
+        setLoading(false)
+      }
+
+      fetchListings()
     }
+  }, [router, status, session])
 
-    setUser(parsedUser)
-
-    // Simulate fetching host listings
-    const fetchListings = async () => {
-      const allListings = await getListings()
-      // Filter to host's listings (in real app, would filter by hostId)
-      setListings(allListings.slice(0, 2))
-      setLoading(false)
-    }
-
-    fetchListings()
-  }, [router])
-
-  if (!user) return null
+  if (status === "loading" || !session) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -72,7 +81,7 @@ export default function HostListingsPage() {
                   <h3 className="font-semibold text-lg mb-2">{listing.title}</h3>
                   <p className="text-sm text-neutral-600 mb-4">{listing.location.city}</p>
                   <div className="flex justify-between items-center mb-4">
-                    <span className="font-bold">${listing.pricePerNight}/night</span>
+                    <span className="font-bold">৳{listing.pricePerMonth}/month</span>
                     <span className="text-sm">★ {listing.rating}</span>
                   </div>
                   <div className="flex gap-2">

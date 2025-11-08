@@ -2,9 +2,13 @@
 
 import Link from "next/link"
 import { useState } from "react"
+import { useSession, signOut } from "next-auth/react"
+import Image from "next/image"
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const { data: session, status } = useSession()
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -42,12 +46,95 @@ export default function Header() {
 
           {/* Auth Buttons */}
           <div className="hidden lg:flex items-center gap-4">
-            <Link href="/login" className="text-neutral-700 hover:text-primary transition-colors font-medium">
-              Log In
-            </Link>
-            <Link href="/signup" className="bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-lg font-semibold transition-all shadow-sm hover:shadow-md">
-              Sign Up
-            </Link>
+            {status === "loading" ? (
+              <div className="w-8 h-8 rounded-full bg-neutral-200 animate-pulse"></div>
+            ) : session?.user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                >
+                  {session.user.image ? (
+                    <Image
+                      src={session.user.image}
+                      alt={session.user.name || "User"}
+                      width={36}
+                      height={36}
+                      className="rounded-full border-2 border-primary"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-semibold">
+                      {session.user.name?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <svg
+                    className={`w-4 h-4 text-neutral-600 transition-transform ${isUserMenuOpen ? "rotate-180" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* User Dropdown Menu */}
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-neutral-200 py-2 z-50">
+                    <div className="px-4 py-3 border-b border-neutral-100">
+                      <p className="text-sm font-semibold text-neutral-900">{session.user.name}</p>
+                      <p className="text-xs text-neutral-600 truncate">{session.user.email}</p>
+                      <span className="inline-block mt-1 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
+                        {session.user.role}
+                      </span>
+                    </div>
+                    <Link
+                      href="/dashboard"
+                      className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      href="/host/listings"
+                      className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      My Listings
+                    </Link>
+                    <Link
+                      href="/bookings"
+                      className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      My Bookings
+                    </Link>
+                    <div className="border-t border-neutral-100 mt-2 pt-2">
+                      <button
+                        onClick={() => signOut({ callbackUrl: "/" })}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-neutral-700 hover:text-primary transition-colors font-medium"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/signup"
+                  className="bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-lg font-semibold transition-all shadow-sm hover:shadow-md"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -80,12 +167,58 @@ export default function Header() {
               Blog
             </Link>
             <div className="border-t border-neutral-100 pt-2 mt-2">
-              <Link href="/login" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
-                Log In
-              </Link>
-              <Link href="/signup" className="block mx-4 my-2 text-center bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-semibold transition-all">
-                Sign Up
-              </Link>
+              {session?.user ? (
+                <>
+                  <div className="px-4 py-3 border-b border-neutral-100">
+                    <div className="flex items-center gap-3">
+                      {session.user.image ? (
+                        <Image
+                          src={session.user.image}
+                          alt={session.user.name || "User"}
+                          width={40}
+                          height={40}
+                          className="rounded-full border-2 border-primary"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-semibold">
+                          {session.user.name?.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-semibold text-neutral-900">{session.user.name}</p>
+                        <p className="text-xs text-neutral-600">{session.user.email}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <Link href="/dashboard" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
+                    Dashboard
+                  </Link>
+                  <Link href="/bookings" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
+                    My Bookings
+                  </Link>
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="block w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 transition-colors font-medium"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="block w-full text-left px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium"
+                  >
+                    Log In
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="block mx-4 my-2 text-center bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-semibold transition-all"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
             </div>
           </nav>
         )}

@@ -6,7 +6,7 @@ export interface User {
   profileImage?: string
   phone?: string
   bio?: string
-  role: "renter" | "host" | "admin"
+  role: "renter" | "owner" | "admin"
   createdAt: Date
   updatedAt: Date
 }

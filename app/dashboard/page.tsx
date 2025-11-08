@@ -2,42 +2,51 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { getBookingsByUserId } from "@/lib/api-utils"
 import type { Booking } from "@/data/types"
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const { data: session, status } = useSession()
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const userData = localStorage.getItem("user")
-    if (!userData) {
+    if (status === "unauthenticated") {
       router.push("/login")
       return
     }
 
-    const parsedUser = JSON.parse(userData)
-    setUser(parsedUser)
+    if (status === "authenticated") {
+      // Redirect property owners to their listings page
+      if (session?.user?.role === "owner") {
+        router.push("/host/listings")
+        return
+      }
 
-    // Simulate fetching bookings
-    const fetchBookings = async () => {
-      const userBookings = await getBookingsByUserId("user-1")
-      setBookings(userBookings)
-      setLoading(false)
+      // Simulate fetching bookings
+      const fetchBookings = async () => {
+        const userBookings = await getBookingsByUserId("user-1")
+        setBookings(userBookings)
+        setLoading(false)
+      }
+
+      fetchBookings()
     }
+  }, [router, status, session])
 
-    fetchBookings()
-  }, [router])
-
-  const handleLogout = () => {
-    localStorage.removeItem("user")
-    router.push("/")
+  if (status === "loading" || !session) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    )
   }
-
-  if (!user) return null
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -45,12 +54,9 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-neutral-600">Welcome back, {user.email}</p>
+            <h1 className="text-3xl font-bold">Renter Dashboard</h1>
+            <p className="text-neutral-600">Welcome back, {session.user.name || session.user.email}</p>
           </div>
-          <button onClick={handleLogout} className="btn-secondary">
-            Logout
-          </button>
         </div>
 
         {/* Tabs */}
@@ -85,10 +91,10 @@ export default function DashboardPage() {
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <h3 className="font-semibold">Booking #{booking.id}</h3>
-                      <p className="text-sm text-neutral-600">
-                        {new Date(booking.checkInDate).toLocaleDateString()} -{" "}
-                        {new Date(booking.checkOutDate).toLocaleDateString()}
-                      </p>
+                      <div className="text-sm text-neutral-600">
+                        {new Date(booking.moveInDate).toLocaleDateString()} -{" "}
+                        {new Date(booking.leaseEndDate).toLocaleDateString()}
+                      </div>
                     </div>
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-semibold ${
