@@ -57,21 +57,21 @@ export default async function BookingConfirmPage({ params }: BookingConfirmPageP
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>
-                    ${booking.priceBreakdown.nightlyRate} × {booking.priceBreakdown.nights} nights
+                    ৳{booking.priceBreakdown.nightlyRate} × {booking.priceBreakdown.nights} nights
                   </span>
-                  <span>${booking.priceBreakdown.subtotal}</span>
+                  <span>৳{booking.priceBreakdown.subtotal}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Cleaning fee</span>
-                  <span>${booking.priceBreakdown.cleaningFee}</span>
+                  <span>৳{booking.priceBreakdown.cleaningFee}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Service fee</span>
-                  <span>${booking.priceBreakdown.serviceFee}</span>
+                  <span>৳{booking.priceBreakdown.serviceFee}</span>
                 </div>
                 <div className="flex justify-between font-bold text-base pt-2 border-t">
                   <span>Total</span>
-                  <span>${booking.priceBreakdown.total}</span>
+                  <span>৳{booking.priceBreakdown.total}</span>
                 </div>
               </div>
             </div>

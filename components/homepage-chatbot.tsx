@@ -166,7 +166,7 @@ export default function HomepageChatbot() {
       {/* Chatbot Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center z-40 hover:scale-110"
+        className="fixed bottom-6 right-24 w-14 h-14 bg-primary text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center z-40 hover:scale-110"
         aria-label="Open chatbot"
       >
         {isOpen ? (
@@ -187,7 +187,7 @@ export default function HomepageChatbot() {
 
       {/* Chatbot Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-96 max-h-[600px] bg-white rounded-lg shadow-2xl flex flex-col z-40 border border-neutral-200">
+        <div className="fixed bottom-24 right-24 w-96 max-h-[600px] bg-white rounded-lg shadow-2xl flex flex-col z-40 border border-neutral-200">
           {/* Header */}
           <div className="bg-primary text-white p-4 rounded-t-lg">
             <h3 className="font-semibold">Basha Lagbe Assistant</h3>

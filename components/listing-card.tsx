@@ -35,7 +35,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
 
           {/* Price */}
           <div className="flex items-baseline gap-1">
-            <span className="text-xl font-bold text-neutral-900">${listing.pricePerMonth}</span>
+            <span className="text-xl font-bold text-neutral-900">৳{listing.pricePerMonth}</span>
             <span className="text-neutral-600">/month</span>
           </div>
         </div>

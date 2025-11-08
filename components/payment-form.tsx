@@ -94,7 +94,7 @@ export default function PaymentForm({
           </div>
           <div className="flex justify-between font-bold text-base pt-2 border-t">
             <span>Total Amount</span>
-            <span>${totalPrice}</span>
+            <span>৳{totalPrice}</span>
           </div>
         </div>
       </div>
@@ -210,7 +210,7 @@ export default function PaymentForm({
           </div>
 
           <button type="submit" disabled={loading} className="btn-primary w-full">
-            {loading ? "Processing..." : `Pay $${totalPrice}`}
+            {loading ? "Processing..." : `Pay ৳${totalPrice}`}
           </button>
         </form>
       )}

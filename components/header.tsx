@@ -12,37 +12,46 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-primary-dark rounded-lg flex items-center justify-center shadow-md">
               <span className="text-white font-bold text-lg">B</span>
             </div>
             <span className="font-bold text-xl text-neutral-900 hidden sm:inline">Basha Lagbe</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
-            <Link href="/search" className="text-neutral-600 hover:text-primary transition-colors">
-              Search
+          <nav className="hidden lg:flex items-center gap-6">
+            <Link href="/search" className="text-neutral-700 hover:text-primary transition-colors font-medium">
+              Find Rentals
             </Link>
-            <Link href="/host" className="text-neutral-600 hover:text-primary transition-colors">
-              Become a Host
+            <Link href="/host/listings" className="text-neutral-700 hover:text-primary transition-colors font-medium">
+              List Property
             </Link>
-            <Link href="/about" className="text-neutral-600 hover:text-primary transition-colors">
-              About
+            <Link href="/about" className="text-neutral-700 hover:text-primary transition-colors font-medium">
+              About Us
+            </Link>
+            <Link href="/contact" className="text-neutral-700 hover:text-primary transition-colors font-medium">
+              Contact
+            </Link>
+            <Link href="/faq" className="text-neutral-700 hover:text-primary transition-colors font-medium">
+              FAQ
+            </Link>
+            <Link href="/blog" className="text-neutral-700 hover:text-primary transition-colors font-medium">
+              Blog
             </Link>
           </nav>
 
           {/* Auth Buttons */}
-          <div className="flex items-center gap-4">
-            <Link href="/login" className="text-neutral-600 hover:text-primary transition-colors hidden sm:inline">
-              Login
+          <div className="hidden lg:flex items-center gap-4">
+            <Link href="/login" className="text-neutral-700 hover:text-primary transition-colors font-medium">
+              Log In
             </Link>
-            <Link href="/signup" className="btn-primary text-sm">
+            <Link href="/signup" className="bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-lg font-semibold transition-all shadow-sm hover:shadow-md">
               Sign Up
             </Link>
           </div>
 
           {/* Mobile Menu Button */}
-          <button className="md:hidden p-2" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
+          <button className="lg:hidden p-2" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
@@ -51,19 +60,33 @@ export default function Header() {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <nav className="md:hidden pb-4 space-y-2">
-            <Link href="/search" className="block px-4 py-2 text-neutral-600 hover:bg-neutral-100 rounded">
-              Search
+          <nav className="lg:hidden pb-4 space-y-1 border-t border-neutral-100">
+            <Link href="/search" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
+              Find Rentals
             </Link>
-            <Link href="/host" className="block px-4 py-2 text-neutral-600 hover:bg-neutral-100 rounded">
-              Become a Host
+            <Link href="/host/listings" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
+              List Property
             </Link>
-            <Link href="/about" className="block px-4 py-2 text-neutral-600 hover:bg-neutral-100 rounded">
-              About
+            <Link href="/about" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
+              About Us
             </Link>
-            <Link href="/login" className="block px-4 py-2 text-neutral-600 hover:bg-neutral-100 rounded">
-              Login
+            <Link href="/contact" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
+              Contact
             </Link>
+            <Link href="/faq" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
+              FAQ
+            </Link>
+            <Link href="/blog" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
+              Blog
+            </Link>
+            <div className="border-t border-neutral-100 pt-2 mt-2">
+              <Link href="/login" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
+                Log In
+              </Link>
+              <Link href="/signup" className="block mx-4 my-2 text-center bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-semibold transition-all">
+                Sign Up
+              </Link>
+            </div>
           </nav>
         )}
       </div>

@@ -42,7 +42,7 @@ export default function BookingForm({ listing }: BookingFormProps) {
     <div className="card p-6 sticky top-20">
       <div className="mb-6">
         <div className="flex items-baseline gap-1 mb-2">
-          <span className="text-3xl font-bold">${listing.pricePerMonth}</span>
+          <span className="text-3xl font-bold">৳{listing.pricePerMonth}</span>
           <span className="text-neutral-600">/month</span>
         </div>
         <div className="flex items-center gap-1">
@@ -82,21 +82,21 @@ export default function BookingForm({ listing }: BookingFormProps) {
         <div className="mt-6 pt-6 border-t border-neutral-200 space-y-2 text-sm">
           <div className="flex justify-between">
             <span>
-              ${listing.pricePerMonth} × {pricing.months} months
+              ৳{listing.pricePerMonth} × {pricing.months} months
             </span>
-            <span>${pricing.subtotal}</span>
+            <span>৳{pricing.subtotal}</span>
           </div>
           <div className="flex justify-between">
             <span>Security Deposit</span>
-            <span>${listing.securityDeposit}</span>
+            <span>৳{listing.securityDeposit}</span>
           </div>
           <div className="flex justify-between">
             <span>Maintenance Fee</span>
-            <span>${listing.maintenanceFee}</span>
+            <span>৳{listing.maintenanceFee}</span>
           </div>
           <div className="flex justify-between font-bold text-base pt-2 border-t">
             <span>Total</span>
-            <span>${pricing.total}</span>
+            <span>৳{pricing.total}</span>
           </div>
         </div>
       )}

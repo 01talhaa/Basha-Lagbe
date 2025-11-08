@@ -73,7 +73,7 @@ export default async function PaymentPage({ params, searchParams }: PaymentPageP
 
               <div className="flex justify-between font-bold text-lg">
                 <span>Total</span>
-                <span className="text-primary">${totalPrice}</span>
+                <span className="text-primary">৳{totalPrice}</span>
               </div>
             </div>
           </div>
