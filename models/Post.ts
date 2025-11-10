@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Model } from "mongoose"
 import "./User"
-import "./Post"
+import "./Community"
 
 export interface IPost extends Document {
   text: string
