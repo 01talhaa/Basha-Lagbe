@@ -4,7 +4,7 @@ import "./User"
 export interface ICommunity extends Document {
   name: string
   description: string
-  members: mongoose.Types.ObjectId[]
+  members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
   createdAt: Date
 }
 
