@@ -1,14 +1,50 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import SearchBar from "@/components/search-bar"
 import HomepageChatbot from "@/components/homepage-chatbot"
-import ListingCard from "@/components/listing-card"
-import { getListings } from "@/lib/api-utils"
 import TestimonialSlider from "../components/testimonial-slider"
 import WhatsAppButton from "@/components/whatsapp-button"
 
-export default async function HomePage() {
-  const listings = await getListings()
-  const featuredListings = listings.slice(0, 3)
+interface Listing {
+  _id: string
+  title: string
+  description: string
+  location: {
+    city: string
+    state: string
+  }
+  propertyType: string
+  bedrooms: number
+  bathrooms: number
+  pricePerMonth: number
+  images: string[]
+  rating: number
+  reviewCount: number
+}
+
+export default function HomePage() {
+  const [featuredListings, setFeaturedListings] = useState<Listing[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        const response = await fetch("/api/listings")
+        const data = await response.json()
+        if (data.success) {
+          setFeaturedListings(data.listings.slice(0, 3))
+        }
+      } catch (error) {
+        console.error("Failed to fetch listings:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchListings()
+  }, [])
 
   return (
     <div className="min-h-screen">
@@ -91,15 +127,61 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-            {featuredListings.map((listing, index) => (
-              <div 
-                key={listing.id} 
-                className="transform transition-all duration-300 hover:scale-105"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <ListingCard listing={listing} />
+            {loading ? (
+              Array(3).fill(0).map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl shadow-lg p-4 animate-pulse">
+                  <div className="w-full h-64 bg-gray-200 rounded-xl mb-4"></div>
+                  <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                </div>
+              ))
+            ) : featuredListings.length > 0 ? (
+              featuredListings.map((listing, index) => (
+                <Link
+                  key={listing._id}
+                  href={`/listing/${listing._id}`}
+                  className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className="relative h-64 overflow-hidden">
+                    <img
+                      src={listing.images[0] || "/placeholder.svg"}
+                      alt={listing.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                    <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full text-sm font-semibold text-primary">
+                      ${listing.pricePerMonth}/mo
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-neutral-900 mb-2 line-clamp-1">
+                      {listing.title}
+                    </h3>
+                    <p className="text-neutral-600 mb-4 line-clamp-2">
+                      {listing.location.city}, {listing.location.state}
+                    </p>
+                    <div className="flex items-center gap-4 text-sm text-neutral-600">
+                      <span className="flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        {listing.bedrooms} beds
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        {listing.bathrooms} baths
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-3 text-center py-12">
+                <p className="text-neutral-600">No listings available yet</p>
               </div>
-            ))}
+            )}
           </div>
 
           <div className="text-center">
