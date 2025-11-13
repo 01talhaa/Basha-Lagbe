@@ -4,14 +4,30 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
-import { getListings } from "@/lib/api-utils"
-import type { Listing } from "@/data/types"
+
+interface Listing {
+  _id: string
+  title: string
+  description: string
+  location: {
+    city: string
+    state: string
+  }
+  propertyType: string
+  bedrooms: number
+  bathrooms: number
+  pricePerMonth: number
+  images: string[]
+  rating: number
+  reviewCount: number
+}
 
 export default function HostListingsPage() {
   const router = useRouter()
   const { data: session, status } = useSession()
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -26,17 +42,46 @@ export default function HostListingsPage() {
         return
       }
 
-      // Simulate fetching host listings
+      // Fetch host's listings from MongoDB
       const fetchListings = async () => {
-        const allListings = await getListings()
-        // Filter to host's listings (in real app, would filter by hostId)
-        setListings(allListings.slice(0, 2))
-        setLoading(false)
+        try {
+          const response = await fetch(`/api/listings?hostId=${session.user.id}`)
+          const data = await response.json()
+          if (data.success) {
+            setListings(data.listings)
+          }
+        } catch (error) {
+          console.error("Failed to fetch listings:", error)
+        } finally {
+          setLoading(false)
+        }
       }
 
       fetchListings()
     }
   }, [router, status, session])
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this listing?")) return
+
+    setDeleting(id)
+    try {
+      const response = await fetch(`/api/listings/${id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        setListings((prev) => prev.filter((listing) => listing._id !== id))
+      } else {
+        alert("Failed to delete listing")
+      }
+    } catch (error) {
+      console.error("Delete error:", error)
+      alert("Failed to delete listing")
+    } finally {
+      setDeleting(null)
+    }
+  }
 
   if (status === "loading" || !session) {
     return (
@@ -69,7 +114,7 @@ export default function HostListingsPage() {
         ) : listings.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {listings.map((listing) => (
-              <div key={listing.id} className="card overflow-hidden">
+              <div key={listing._id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                 <div className="relative h-48 bg-neutral-200">
                   <img
                     src={listing.images[0] || "/placeholder.svg"}
@@ -78,21 +123,38 @@ export default function HostListingsPage() {
                   />
                 </div>
                 <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-2">{listing.title}</h3>
-                  <p className="text-sm text-neutral-600 mb-4">{listing.location.city}</p>
+                  <h3 className="font-semibold text-lg mb-1">{listing.title}</h3>
+                  <p className="text-sm text-neutral-600 mb-3">
+                    {listing.location.city}, {listing.location.state}
+                  </p>
+                  <div className="flex items-center gap-4 text-sm text-neutral-600 mb-3">
+                    <span>{listing.bedrooms} beds</span>
+                    <span>{listing.bathrooms} baths</span>
+                    <span className="capitalize">{listing.propertyType}</span>
+                  </div>
                   <div className="flex justify-between items-center mb-4">
-                    <span className="font-bold">৳{listing.pricePerMonth}/month</span>
-                    <span className="text-sm">★ {listing.rating}</span>
+                    <span className="font-bold text-lg">৳{listing.pricePerMonth.toLocaleString()}/mo</span>
+                    <span className="text-sm text-neutral-600">★ {listing.rating} ({listing.reviewCount})</span>
                   </div>
                   <div className="flex gap-2">
                     <Link
-                      href={`/listing/${listing.id}`}
-                      className="flex-1 px-3 py-2 bg-primary text-white rounded text-center text-sm hover:bg-primary-dark transition-colors"
+                      href={`/listing/${listing._id}`}
+                      className="flex-1 px-3 py-2 bg-primary text-white rounded-lg text-center text-sm hover:bg-primary-dark transition-colors"
                     >
                       View
                     </Link>
-                    <button className="flex-1 px-3 py-2 border border-neutral-300 rounded text-sm hover:bg-neutral-50 transition-colors">
+                    <Link
+                      href={`/host/listings/${listing._id}/edit`}
+                      className="flex-1 px-3 py-2 bg-neutral-100 text-neutral-900 rounded-lg text-center text-sm hover:bg-neutral-200 transition-colors"
+                    >
                       Edit
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(listing._id)}
+                      disabled={deleting === listing._id}
+                      className="px-3 py-2 bg-red-50 text-red-600 rounded-lg text-sm hover:bg-red-100 transition-colors disabled:opacity-50"
+                    >
+                      {deleting === listing._id ? "..." : "Delete"}
                     </button>
                   </div>
                 </div>

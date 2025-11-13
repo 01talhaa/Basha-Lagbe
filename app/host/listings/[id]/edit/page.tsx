@@ -1,27 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
 const AMENITIES_OPTIONS = [
-  "WiFi",
-  "Kitchen",
-  "Washer",
-  "Dryer",
-  "Air Conditioning",
-  "Heating",
-  "TV",
-  "Workspace",
-  "Pool",
-  "Gym",
-  "Parking",
-  "Elevator",
-  "Balcony",
-  "Garden",
-  "Security System",
+  "WiFi", "Kitchen", "Washer", "Dryer", "Air Conditioning", "Heating", "TV", "Workspace",
+  "Pool", "Gym", "Parking", "Elevator", "Balcony", "Garden", "Security System",
 ]
 
 const PROPERTY_TYPES = [
@@ -54,13 +41,15 @@ interface FormData {
   endDate: string
 }
 
-export default function NewListingPage() {
+export default function EditListingPage() {
   const router = useRouter()
+  const params = useParams()
   const { data: session, status } = useSession()
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
-  const [imageFiles, setImageFiles] = useState<File[]>([])
-  const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const [existingImages, setExistingImages] = useState<string[]>([])
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([])
   const [currentRule, setCurrentRule] = useState("")
   
   const [formData, setFormData] = useState<FormData>({
@@ -92,8 +81,55 @@ export default function NewListingPage() {
       router.push("/login")
     } else if (status === "authenticated" && session?.user?.role !== "owner") {
       router.push("/dashboard")
+    } else if (status === "authenticated") {
+      fetchListing()
     }
   }, [status, session, router])
+
+  const fetchListing = async () => {
+    try {
+      const response = await fetch(`/api/listings/${params.id}`)
+      const data = await response.json()
+
+      if (!data.success) {
+        throw new Error(data.error || "Failed to fetch listing")
+      }
+
+      const listing = data.listing
+      setFormData({
+        title: listing.title,
+        description: listing.description,
+        address: listing.location.address,
+        city: listing.location.city,
+        state: listing.location.state,
+        zipCode: listing.location.zipCode,
+        latitude: listing.location.latitude,
+        longitude: listing.location.longitude,
+        propertyType: listing.propertyType,
+        bedrooms: listing.bedrooms,
+        bathrooms: listing.bathrooms,
+        maxGuests: listing.maxGuests,
+        pricePerMonth: listing.pricePerMonth,
+        securityDeposit: listing.securityDeposit,
+        maintenanceFee: listing.maintenanceFee,
+        amenities: listing.amenities || [],
+        rules: listing.rules || [],
+        startDate: new Date(listing.availability.startDate).toISOString().split("T")[0],
+        endDate: new Date(listing.availability.endDate).toISOString().split("T")[0],
+      })
+      setExistingImages(listing.images || [])
+      
+      // Set initial map URL
+      const fullAddress = `${listing.location.address} ${listing.location.city} ${listing.location.state} ${listing.location.zipCode}`.trim()
+      if (fullAddress) {
+        setMapUrl(`https://maps.google.com/maps?q=${encodeURIComponent(fullAddress)}&output=embed`)
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to load listing")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Update map URL when location fields change
   const handleLocationChange = () => {
@@ -151,21 +187,21 @@ export default function NewListingPage() {
     const files = Array.from(e.target.files || [])
     if (files.length === 0) return
 
-    setImageFiles((prev) => [...prev, ...files])
-
-    // Create previews
     files.forEach((file) => {
       const reader = new FileReader()
       reader.onloadend = () => {
-        setImagePreviews((prev) => [...prev, reader.result as string])
+        setNewImagePreviews((prev) => [...prev, reader.result as string])
       }
       reader.readAsDataURL(file)
     })
   }
 
-  const removeImage = (index: number) => {
-    setImageFiles((prev) => prev.filter((_, i) => i !== index))
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index))
+  const removeExistingImage = (index: number) => {
+    setExistingImages((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const removeNewImage = (index: number) => {
+    setNewImagePreviews((prev) => prev.filter((_, i) => i !== index))
   }
 
   const toggleAmenity = (amenity: string) => {
@@ -196,16 +232,14 @@ export default function NewListingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setSaving(true)
     setError("")
 
     try {
-      // Validate images
-      if (imagePreviews.length === 0) {
-        throw new Error("Please add at least one image")
+      if (existingImages.length === 0 && newImagePreviews.length === 0) {
+        throw new Error("Please have at least one image")
       }
 
-      // Create listing payload
       const listingData = {
         title: formData.title,
         description: formData.description,
@@ -224,7 +258,7 @@ export default function NewListingPage() {
         pricePerMonth: formData.pricePerMonth,
         securityDeposit: formData.securityDeposit,
         maintenanceFee: formData.maintenanceFee,
-        images: imagePreviews, // Base64 images
+        images: [...existingImages, ...newImagePreviews],
         amenities: formData.amenities,
         rules: formData.rules,
         availability: {
@@ -233,8 +267,8 @@ export default function NewListingPage() {
         },
       }
 
-      const response = await fetch("/api/listings", {
-        method: "POST",
+      const response = await fetch(`/api/listings/${params.id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(listingData),
       })
@@ -242,19 +276,18 @@ export default function NewListingPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create listing")
+        throw new Error(data.error || "Failed to update listing")
       }
 
-      // Redirect to listings page
       router.push("/host/listings")
     } catch (err: any) {
-      setError(err.message || "Failed to create listing")
+      setError(err.message || "Failed to update listing")
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
-  if (status === "loading") {
+  if (status === "loading" || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -262,12 +295,14 @@ export default function NewListingPage() {
     )
   }
 
+  const allImages = [...existingImages, ...newImagePreviews]
+
   return (
     <div className="min-h-screen bg-neutral-50 py-8">
       <div className="max-w-5xl mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-neutral-900 mb-2">Create New Listing</h1>
-          <p className="text-neutral-600">Fill in the details to list your property</p>
+          <h1 className="text-3xl font-bold text-neutral-900 mb-2">Edit Listing</h1>
+          <p className="text-neutral-600">Update your property details</p>
         </div>
 
         {error && (
@@ -282,30 +317,23 @@ export default function NewListingPage() {
             <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Title *
-                </label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Title *</label>
                 <input
                   type="text"
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="e.g., Modern Downtown Apartment with City Views"
                 />
               </div>
-
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Description *
-                </label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Description *</label>
                 <textarea
                   required
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={4}
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Describe your property in detail..."
                 />
               </div>
             </div>
@@ -316,19 +344,15 @@ export default function NewListingPage() {
             <h2 className="text-xl font-semibold mb-4">Location</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Address *
-                </label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Address *</label>
                 <input
                   type="text"
                   required
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="123 Main Street"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-2">City *</label>
                 <input
@@ -337,10 +361,8 @@ export default function NewListingPage() {
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Dhaka"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-2">State *</label>
                 <input
@@ -349,25 +371,18 @@ export default function NewListingPage() {
                   value={formData.state}
                   onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Dhaka Division"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Zip Code *
-                </label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Zip Code *</label>
                 <input
                   type="text"
                   required
                   value={formData.zipCode}
                   onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="1000"
                 />
               </div>
-
-              {/* Map Preview */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                   Location Preview
@@ -412,9 +427,7 @@ export default function NewListingPage() {
             <h2 className="text-xl font-semibold mb-4">Property Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Property Type *
-                </label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Property Type *</label>
                 <select
                   required
                   value={formData.propertyType}
@@ -422,17 +435,12 @@ export default function NewListingPage() {
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   {PROPERTY_TYPES.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
+                    <option key={type.value} value={type.value}>{type.label}</option>
                   ))}
                 </select>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Bedrooms *
-                </label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Bedrooms *</label>
                 <input
                   type="number"
                   required
@@ -442,11 +450,8 @@ export default function NewListingPage() {
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Bathrooms *
-                </label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Bathrooms *</label>
                 <input
                   type="number"
                   required
@@ -457,11 +462,8 @@ export default function NewListingPage() {
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Max Guests *
-                </label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Max Guests *</label>
                 <input
                   type="number"
                   required
@@ -479,9 +481,7 @@ export default function NewListingPage() {
             <h2 className="text-xl font-semibold mb-4">Pricing</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Price per Month (৳) *
-                </label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Price per Month (৳) *</label>
                 <input
                   type="number"
                   required
@@ -491,34 +491,24 @@ export default function NewListingPage() {
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Security Deposit (৳) *
-                </label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Security Deposit (৳) *</label>
                 <input
                   type="number"
                   required
                   min="0"
                   value={formData.securityDeposit}
-                  onChange={(e) =>
-                    setFormData({ ...formData, securityDeposit: Number(e.target.value) })
-                  }
+                  onChange={(e) => setFormData({ ...formData, securityDeposit: Number(e.target.value) })}
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Maintenance Fee (৳)
-                </label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Maintenance Fee (৳)</label>
                 <input
                   type="number"
                   min="0"
                   value={formData.maintenanceFee}
-                  onChange={(e) =>
-                    setFormData({ ...formData, maintenanceFee: Number(e.target.value) })
-                  }
+                  onChange={(e) => setFormData({ ...formData, maintenanceFee: Number(e.target.value) })}
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
@@ -532,21 +522,10 @@ export default function NewListingPage() {
               <div>
                 <label className="block w-full px-6 py-8 border-2 border-dashed border-neutral-300 rounded-lg hover:border-primary cursor-pointer transition-colors">
                   <div className="text-center">
-                    <svg
-                      className="w-12 h-12 mx-auto text-neutral-400 mb-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                      />
+                    <svg className="w-12 h-12 mx-auto text-neutral-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                    <p className="text-sm text-neutral-600">Click to upload images</p>
-                    <p className="text-xs text-neutral-400 mt-1">PNG, JPG up to 10MB each</p>
+                    <p className="text-sm text-neutral-600">Click to add more images</p>
                   </div>
                   <input
                     type="file"
@@ -557,19 +536,27 @@ export default function NewListingPage() {
                   />
                 </label>
               </div>
-
-              {imagePreviews.length > 0 && (
+              {allImages.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={preview}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg"
-                      />
+                  {existingImages.map((img, index) => (
+                    <div key={`existing-${index}`} className="relative group">
+                      <img src={img} alt={`Existing ${index + 1}`} className="w-full h-32 object-cover rounded-lg" />
                       <button
                         type="button"
-                        onClick={() => removeImage(index)}
+                        onClick={() => removeExistingImage(index)}
+                        className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {newImagePreviews.map((preview, index) => (
+                    <div key={`new-${index}`} className="relative group">
+                      <img src={preview} alt={`New ${index + 1}`} className="w-full h-32 object-cover rounded-lg" />
+                      <div className="absolute top-2 left-2 px-2 py-1 bg-green-500 text-white text-xs rounded">New</div>
+                      <button
+                        type="button"
+                        onClick={() => removeNewImage(index)}
                         className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                       >
                         ×
@@ -623,14 +610,10 @@ export default function NewListingPage() {
                   Add
                 </button>
               </div>
-
               {formData.rules.length > 0 && (
                 <div className="space-y-2">
                   {formData.rules.map((rule, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg"
-                    >
+                    <div key={index} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                       <span className="text-sm text-neutral-700">{rule}</span>
                       <button
                         type="button"
@@ -651,9 +634,7 @@ export default function NewListingPage() {
             <h2 className="text-xl font-semibold mb-4">Availability</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Available From *
-                </label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Available From *</label>
                 <input
                   type="date"
                   required
@@ -662,11 +643,8 @@ export default function NewListingPage() {
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Available Until *
-                </label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Available Until *</label>
                 <input
                   type="date"
                   required
@@ -689,10 +667,10 @@ export default function NewListingPage() {
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={saving}
               className="flex-1 px-8 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Creating Listing..." : "Create Listing"}
+              {saving ? "Saving Changes..." : "Save Changes"}
             </button>
           </div>
         </form>

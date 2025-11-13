@@ -1,21 +1,98 @@
-import { getListingById, getReviewsByListingId } from "@/lib/api-utils"
-import { notFound } from "next/navigation"
+"use client"
+
+import { useState, useEffect } from "react"
+import { useParams, notFound, useRouter } from "next/navigation"
 import BookingForm from "@/components/booking-form"
 import ReviewSection from "@/components/review-section"
-import LocationMap from "@/components/location-map"
 
-interface ListingPageProps {
-  params: {
-    id: string
+interface Listing {
+  _id: string
+  title: string
+  description: string
+  location: {
+    address: string
+    city: string
+    state: string
+    zipCode: string
+    latitude: number
+    longitude: number
   }
+  propertyType: string
+  bedrooms: number
+  bathrooms: number
+  maxGuests: number
+  pricePerMonth: number
+  securityDeposit: number
+  maintenanceFee: number
+  images: string[]
+  amenities: string[]
+  rules: string[]
+  rating: number
+  reviewCount: number
+  hostId: string
 }
 
-export default async function ListingPage({ params }: ListingPageProps) {
-  const listing = await getListingById(params.id)
-  const reviews = await getReviewsByListingId(params.id)
+export default function ListingPage() {
+  const params = useParams()
+  const router = useRouter()
+  const [listing, setListing] = useState<Listing | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [mapUrl, setMapUrl] = useState("")
 
-  if (!listing) {
-    notFound()
+  useEffect(() => {
+    const fetchListing = async () => {
+      try {
+        const response = await fetch(`/api/listings/${params.id}`)
+        const data = await response.json()
+
+        if (!data.success) {
+          setError("Listing not found")
+          return
+        }
+
+        setListing(data.listing)
+        
+        // Generate map URL from location
+        const location = data.listing.location
+        const fullAddress = `${location.address} ${location.city} ${location.state} ${location.zipCode}`.trim()
+        if (fullAddress) {
+          setMapUrl(`https://maps.google.com/maps?q=${encodeURIComponent(fullAddress)}&output=embed`)
+        }
+      } catch (err) {
+        console.error("Failed to fetch listing:", err)
+        setError("Failed to load listing")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchListing()
+  }, [params.id])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    )
+  }
+
+  if (error || !listing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-neutral-900 mb-2">Listing Not Found</h1>
+          <p className="text-neutral-600 mb-4">The listing you're looking for doesn't exist.</p>
+          <button
+            onClick={() => router.push("/search")}
+            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+          >
+            Browse Listings
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -85,25 +162,78 @@ export default async function ListingPage({ params }: ListingPageProps) {
             </div>
 
             {/* Amenities */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold mb-4">Amenities</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {listing.amenities.map((amenity) => (
-                  <div key={amenity} className="flex items-center gap-2 p-3 bg-white rounded-lg">
-                    <span className="text-primary">✓</span>
-                    <span>{amenity}</span>
-                  </div>
-                ))}
+            {listing.amenities && listing.amenities.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-4">Amenities</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {listing.amenities.map((amenity) => (
+                    <div key={amenity} className="flex items-center gap-2 p-3 bg-white rounded-lg">
+                      <span className="text-primary">✓</span>
+                      <span>{amenity}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
+            {/* House Rules */}
+            {listing.rules && listing.rules.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-4">House Rules</h2>
+                <div className="bg-white rounded-lg p-6">
+                  <ul className="space-y-3">
+                    {listing.rules.map((rule, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <span className="text-neutral-400 mt-1">•</span>
+                        <span className="text-neutral-700">{rule}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* Location */}
             <div className="mb-8">
               <h2 className="text-2xl font-bold mb-4">Location</h2>
-              <LocationMap listing={listing} />
+              <div className="bg-white rounded-lg p-4 mb-4">
+                <p className="text-neutral-700">
+                  <span className="font-semibold">Address:</span> {listing.location.address}
+                </p>
+                <p className="text-neutral-700">
+                  <span className="font-semibold">City:</span> {listing.location.city}, {listing.location.state} {listing.location.zipCode}
+                </p>
+              </div>
+              {mapUrl ? (
+                <div className="w-full h-96 rounded-lg overflow-hidden border border-neutral-300">
+                  <iframe
+                    src={mapUrl}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    allowFullScreen
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              ) : (
+                <div className="w-full h-96 rounded-lg border border-neutral-300 bg-neutral-100 flex items-center justify-center">
+                  <p className="text-neutral-500">Map unavailable</p>
+                </div>
+              )}
             </div>
 
-            {/* Reviews */}
-            <ReviewSection reviews={reviews} />
+            {/* Reviews Section */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold mb-4">Reviews</h2>
+              <div className="bg-white rounded-lg p-6">
+                <div className="text-center text-neutral-600">
+                  <p className="text-4xl mb-2">★ {listing.rating}</p>
+                  <p>{listing.reviewCount} reviews</p>
+                  <p className="text-sm text-neutral-500 mt-4">Reviews coming soon</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Booking Sidebar */}
