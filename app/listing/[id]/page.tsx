@@ -8,17 +8,7 @@ import ReviewSection from "@/components/review-section"
 import ChatInterface from "@/components/chat-interface"
 import LoginAlert from "@/components/login-alert"
 import { Button } from "@/components/ui/button"
-import { MessageCircle, FileText } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
+import { MessageCircle } from "lucide-react"
 
 interface Listing {
   _id: string
@@ -60,9 +50,6 @@ export default function ListingPage() {
   const [creatingConversation, setCreatingConversation] = useState(false)
   const [showLoginAlert, setShowLoginAlert] = useState(false)
   const [ownerName, setOwnerName] = useState<string>("Owner")
-  const [showLeaseDialog, setShowLeaseDialog] = useState(false)
-  const [leaseMessage, setLeaseMessage] = useState("")
-  const [sendingLeaseRequest, setSendingLeaseRequest] = useState(false)
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -129,43 +116,6 @@ export default function ListingPage() {
     }
   }
 
-  const handleRequestLease = async () => {
-    if (!session?.user) {
-      setShowLoginAlert(true)
-      return
-    }
-
-    if (!listing) return
-
-    setSendingLeaseRequest(true)
-    try {
-      const res = await fetch("/api/lease-requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          listingId: listing._id,
-          ownerId: listing.hostId,
-          message: leaseMessage,
-        }),
-      })
-
-      const data = await res.json()
-
-      if (res.ok) {
-        setShowLeaseDialog(false)
-        setLeaseMessage("")
-        alert("Lease request sent successfully! The owner will review your request.")
-      } else {
-        alert(data.error || "Failed to send lease request")
-      }
-    } catch (error) {
-      console.error("Error sending lease request:", error)
-      alert("Failed to send lease request. Please try again.")
-    } finally {
-      setSendingLeaseRequest(false)
-    }
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -194,28 +144,6 @@ export default function ListingPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Contact Owner & Request Lease Buttons - Fixed position - Show to all users */}
-        {listing && (!session?.user || session.user.id !== listing.hostId) && (
-          <div className="fixed bottom-8 left-8 z-40 flex flex-col gap-3">
-            <Button
-              size="lg"
-              onClick={() => setShowLeaseDialog(true)}
-              className="shadow-lg bg-green-600 hover:bg-green-700"
-            >
-              <FileText className="mr-2 h-5 w-5" />
-              Request Lease
-            </Button>
-            <Button
-              size="lg"
-              onClick={handleContactOwner}
-              disabled={creatingConversation}
-              className="shadow-lg"
-            >
-              <MessageCircle className="mr-2 h-5 w-5" />
-              {creatingConversation ? "Loading..." : "Contact Owner"}
-            </Button>
-          </div>
-        )}
         {/* Image Gallery */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <div className="md:col-span-2 h-96 bg-neutral-200 rounded-lg overflow-hidden">
@@ -356,7 +284,23 @@ export default function ListingPage() {
 
           {/* Booking Sidebar */}
           <div className="lg:col-span-1">
-            <BookingForm listing={listing} />
+            <BookingForm 
+              listing={{
+                ...listing,
+                id: listing._id,
+                propertyType: listing.propertyType as "apartment" | "house" | "room" | "studio",
+                availability: { 
+                  startDate: new Date(), 
+                  endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 
+                  bookedDates: [] 
+                },
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              }}
+              onContactOwner={handleContactOwner}
+              isContactingOwner={creatingConversation}
+              isOwner={session?.user?.id === listing.hostId}
+            />
           </div>
         </div>
       </div>
@@ -373,50 +317,6 @@ export default function ListingPage() {
 
       {/* Login Alert Dialog */}
       <LoginAlert open={showLoginAlert} onOpenChange={setShowLoginAlert} />
-
-      {/* Lease Request Dialog */}
-      <Dialog open={showLeaseDialog} onOpenChange={setShowLeaseDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Request Lease</DialogTitle>
-            <DialogDescription>
-              Send a lease request to the property owner. Include a message about yourself and why you're interested in this property.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="message">Message to Owner *</Label>
-              <Textarea
-                id="message"
-                placeholder="Hi, I'm interested in leasing this property. I'm a..."
-                value={leaseMessage}
-                onChange={(e) => setLeaseMessage(e.target.value)}
-                rows={5}
-                className="resize-none"
-              />
-              <p className="text-sm text-muted-foreground">
-                Introduce yourself and explain why you're a good fit for this property.
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowLeaseDialog(false)}
-              disabled={sendingLeaseRequest}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleRequestLease}
-              disabled={sendingLeaseRequest || !leaseMessage.trim()}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {sendingLeaseRequest ? "Sending..." : "Send Request"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

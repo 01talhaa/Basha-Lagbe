@@ -4,42 +4,105 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import type { Listing } from "@/data/types"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import LoginAlert from "@/components/login-alert"
 
 interface BookingFormProps {
   listing: Listing
+  onContactOwner?: () => void
+  isContactingOwner?: boolean
+  isOwner?: boolean
 }
 
-export default function BookingForm({ listing }: BookingFormProps) {
+export default function BookingForm({ listing, onContactOwner, isContactingOwner = false, isOwner = false }: BookingFormProps) {
   const router = useRouter()
+  const { data: session } = useSession()
   const [moveInDate, setMoveInDate] = useState("")
-  const [leaseLength, setLeaseLength] = useState("12")
+  const [showLeaseDialog, setShowLeaseDialog] = useState(false)
+  const [leaseMessage, setLeaseMessage] = useState("")
+  const [sendingLeaseRequest, setSendingLeaseRequest] = useState(false)
+  const [showLoginAlert, setShowLoginAlert] = useState(false)
 
   const calculatePrice = () => {
-    if (!moveInDate || !leaseLength) return 0
-    const months = Number.parseInt(leaseLength)
-    const subtotal = months * listing.pricePerMonth
+    if (!moveInDate) return 0
+    // Default to 1 month for pricing display
+    const subtotal = listing.pricePerMonth
     const total = subtotal + listing.securityDeposit + listing.maintenanceFee
-    return { months, subtotal, total }
+    return { subtotal, total }
   }
 
   const pricing = calculatePrice()
 
-  const handleReserve = (e: React.FormEvent) => {
+  const handleRequestLease = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!moveInDate || !leaseLength) return
+    
+    if (!session?.user) {
+      setShowLoginAlert(true)
+      return
+    }
 
-    const params = new URLSearchParams({
-      moveInDate,
-      leaseLength,
-      total: pricing.total.toString(),
-    })
+    if (!moveInDate) {
+      alert("Please select move-in date")
+      return
+    }
 
-    router.push(`/booking/${listing.id}/payment?${params.toString()}`)
+    setShowLeaseDialog(true)
+  }
+
+  const submitLeaseRequest = async () => {
+    if (!leaseMessage.trim()) {
+      alert("Please add a message to the owner")
+      return
+    }
+
+    setSendingLeaseRequest(true)
+    try {
+      const res = await fetch("/api/lease-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          listingId: listing.id,
+          ownerId: listing.hostId,
+          message: leaseMessage,
+          moveInDate,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        setShowLeaseDialog(false)
+        setLeaseMessage("")
+        alert("Lease request sent successfully! The owner will review your request.")
+        router.push("/lease-requests")
+      } else {
+        alert(data.error || "Failed to send lease request")
+      }
+    } catch (error) {
+      console.error("Error sending lease request:", error)
+      alert("Failed to send lease request. Please try again.")
+    } finally {
+      setSendingLeaseRequest(false)
+    }
   }
 
   return (
     <div className="card p-6 sticky top-20">
+      {/* Contact Owner Button */}
+
+
       <div className="mb-6">
         <div className="flex items-baseline gap-1 mb-2">
           <span className="text-3xl font-bold">৳{listing.pricePerMonth}</span>
@@ -51,7 +114,7 @@ export default function BookingForm({ listing }: BookingFormProps) {
         </div>
       </div>
 
-      <form onSubmit={handleReserve} className="space-y-4">
+      <form onSubmit={handleRequestLease} className="space-y-4">
         <div>
           <label className="block text-sm font-semibold mb-2">Move-in Date</label>
           <input
@@ -59,30 +122,90 @@ export default function BookingForm({ listing }: BookingFormProps) {
             value={moveInDate}
             onChange={(e) => setMoveInDate(e.target.value)}
             className="input-field"
+            required
           />
         </div>
-
-        <div>
-          <label className="block text-sm font-semibold mb-2">Lease Length (months)</label>
-          <select value={leaseLength} onChange={(e) => setLeaseLength(e.target.value)} className="input-field">
-            {[3, 6, 12, 24, 36].map((num) => (
-              <option key={num} value={num}>
-                {num} {num === 1 ? "month" : "months"}
-              </option>
-            ))}
-          </select>
-        </div>
+              {!isOwner && onContactOwner && (
+        <Button
+          onClick={onContactOwner}
+          disabled={isContactingOwner}
+          className="w-full mb-4 btn-primary"
+          size="lg"
+        >
+          <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          {isContactingOwner ? "Loading..." : "Contact Owner"}
+        </Button>
+      )}
 
         <button type="submit" className="btn-primary w-full">
           Request Lease
         </button>
       </form>
 
-      {pricing.months > 0 && (
+      {/* Login Alert */}
+      <LoginAlert open={showLoginAlert} onOpenChange={setShowLoginAlert} />
+
+      {/* Lease Request Dialog */}
+      <Dialog open={showLeaseDialog} onOpenChange={setShowLeaseDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Request Lease</DialogTitle>
+            <DialogDescription>
+              You're requesting to lease this property starting {moveInDate && new Date(moveInDate).toLocaleDateString()}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-neutral-50 p-4 rounded-lg space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="font-semibold">Move-in Date:</span>
+                <span>{moveInDate && new Date(moveInDate).toLocaleDateString()}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="font-semibold">Monthly Rent:</span>
+                <span>৳{listing.pricePerMonth.toLocaleString()}</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="message">Message to Owner *</Label>
+              <Textarea
+                id="message"
+                placeholder="Hi, I'm interested in leasing this property. I'm a..."
+                value={leaseMessage}
+                onChange={(e) => setLeaseMessage(e.target.value)}
+                rows={5}
+                className="resize-none"
+              />
+              <p className="text-sm text-muted-foreground">
+                Introduce yourself and explain why you're a good fit for this property.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowLeaseDialog(false)}
+              disabled={sendingLeaseRequest}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={submitLeaseRequest}
+              disabled={sendingLeaseRequest || !leaseMessage.trim()}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {sendingLeaseRequest ? "Sending..." : "Send Request"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {pricing !== 0 && (
         <div className="mt-6 pt-6 border-t border-neutral-200 space-y-2 text-sm">
           <div className="flex justify-between">
             <span>
-              ৳{listing.pricePerMonth} × {pricing.months} months
+              Monthly Rent
             </span>
             <span>৳{pricing.subtotal}</span>
           </div>

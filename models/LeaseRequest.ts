@@ -8,6 +8,7 @@ export interface ILeaseRequest extends Document {
   owner: mongoose.Types.ObjectId
   status: "pending" | "approved" | "rejected" | "visit_scheduled" | "agreement_sent" | "agreement_signed" | "completed" | "cancelled"
   message: string
+  moveInDate?: Date
   visitDate?: Date
   agreementUrl?: string
   agreementSignedAt?: Date
@@ -42,6 +43,9 @@ const LeaseRequestSchema = new Schema<ILeaseRequest>(
       type: String,
       required: true,
       trim: true,
+    },
+    moveInDate: {
+      type: Date,
     },
     visitDate: {
       type: Date,

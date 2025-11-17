@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     await dbConnect()
 
     const body = await req.json()
-    const { listingId, ownerId, message } = body
+    const { listingId, ownerId, message, moveInDate } = body
 
     if (!listingId || !ownerId || !message) {
       return NextResponse.json(
@@ -75,6 +75,7 @@ export async function POST(req: Request) {
       owner: ownerId,
       message,
       status: "pending",
+      ...(moveInDate && { moveInDate: new Date(moveInDate) }),
     })
 
     const populated = await LeaseRequest.findById(leaseRequest._id)
