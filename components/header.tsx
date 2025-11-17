@@ -1,14 +1,36 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSession, signOut } from "next-auth/react"
 import Image from "next/image"
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
   const { data: session, status } = useSession()
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchUnreadCount()
+      // Poll every 10 seconds
+      const interval = setInterval(fetchUnreadCount, 10000)
+      return () => clearInterval(interval)
+    }
+  }, [session])
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await fetch("/api/messages/unread-count")
+      if (res.ok) {
+        const data = await res.json()
+        setUnreadCount(data.count || 0)
+      }
+    } catch (error) {
+      console.error("Error fetching unread count:", error)
+    }
+  }
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -103,10 +125,15 @@ export default function Header() {
                     </Link>
                     <Link
                       href="/messages"
-                      className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                      className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors relative"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       Messages
+                      {unreadCount > 0 && (
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
                     </Link>
                     <Link
                       href="/bookings"
@@ -200,8 +227,13 @@ export default function Header() {
                   <Link href="/dashboard" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
                     Dashboard
                   </Link>
-                  <Link href="/messages" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
+                  <Link href="/messages" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium relative">
                     Messages
+                    {unreadCount > 0 && (
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
                   </Link>
                   <Link href="/bookings" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
                     My Bookings
