@@ -1,33 +1,30 @@
-import mongoose, { Schema, Document, Model } from "mongoose"
+import mongoose from "mongoose"
+import { Schema, Document, Model } from "mongoose"
 import "./User"
 import "./Post"
-import "./Community"
 
 export interface IComment extends Document {
-  
-  post: mongoose.Types.ObjectId[]
-  user: mongoose.Types.ObjectId[]
+  post: mongoose.Types.ObjectId
+  author: mongoose.Types.ObjectId
   text: string
-  likes: mongoose.Types.ObjectId[]
-  createdAt: Date
+  createdAt?: Date
 }
 
-const CommentSchema = new Schema<IComment>(
+const CommentSchemaObj = new Schema<IComment>(
   {
     post: {
-    type: [mongoose.Schema.Types.ObjectId],
-    ref: "Post"
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
+      required: true,
     },
-    user: {
-        type: [mongoose.Schema.Types.ObjectId],
-        ref: "User"
-  },
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     text: {
-        type: String, 
-    },
-    likes: {
-        type: [mongoose.Schema.Types.ObjectId],
-        ref: "User"
+      type: String,
+      required: true,
     },
   },
   {
@@ -35,13 +32,10 @@ const CommentSchema = new Schema<IComment>(
   }
 )
 
-
-// Delete the old model if it exists (for hot reload in development)
 if (mongoose.models.Comment) {
   delete mongoose.models.Comment
 }
 
-// Create the model
-const Comment: Model<IComment> = mongoose.model<IComment>("Comment", CommentSchema)
+const Comment: Model<IComment> = mongoose.model<IComment>("Comment", CommentSchemaObj)
 
-export default Comment;
+export default Comment
