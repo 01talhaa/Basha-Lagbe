@@ -4,7 +4,8 @@ import "./User"
 export interface ICommunity extends Document {
   name: string
   description: string
-  members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
+  members?: mongoose.Types.ObjectId[]
+  posts?: mongoose.Types.ObjectId[]
   createdAt: Date
 }
 
@@ -17,6 +18,18 @@ const CommunitySchema = new Schema<ICommunity>(
     description: {
       type: String, // Index for faster email lookups
     },
+    members: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    posts: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Post",
+      },
+    ],
   },
   {
     timestamps: true,
