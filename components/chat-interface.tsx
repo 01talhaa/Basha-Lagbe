@@ -213,7 +213,7 @@ export default function ChatInterface({
                 return (
                   <div
                     key={message._id}
-                    className={`flex items-end gap-2 ${isOwn ? "flex-row-reverse" : ""} ${!showAvatar && !isOwn ? "ml-11" : ""} ${!showAvatar && isOwn ? "mr-11" : ""}`}
+                    className={`flex items-end gap-2 ${isOwn ? "flex-row-reverse" : ""}`}
                   >
                     {showAvatar ? (
                       <Avatar className="h-9 w-9 border-2 border-white dark:border-zinc-800 shadow-sm flex-shrink-0">

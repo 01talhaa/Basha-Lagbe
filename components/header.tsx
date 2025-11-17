@@ -49,9 +49,11 @@ export default function Header() {
             <Link href="/search" className="text-neutral-700 hover:text-primary transition-colors font-medium">
               Find Rentals
             </Link>
-            <Link href="/host/listings" className="text-neutral-700 hover:text-primary transition-colors font-medium">
-              List Property
-            </Link>
+            {session?.user?.role === "owner" && (
+              <Link href="/host/listings" className="text-neutral-700 hover:text-primary transition-colors font-medium">
+                List Property
+              </Link>
+            )}
             <Link href="/about" className="text-neutral-700 hover:text-primary transition-colors font-medium">
               About Us
             </Link>
@@ -116,13 +118,15 @@ export default function Header() {
                     >
                       Dashboard
                     </Link>
-                    <Link
-                      href="/host/listings"
-                      className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      My Listings
-                    </Link>
+                    {session?.user?.role === "owner" && (
+                      <Link
+                        href="/host/listings"
+                        className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        My Listings
+                      </Link>
+                    )}
                     <Link
                       href="/messages"
                       className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors relative"
@@ -134,6 +138,13 @@ export default function Header() {
                           {unreadCount > 9 ? '9+' : unreadCount}
                         </span>
                       )}
+                    </Link>
+                    <Link
+                      href="/lease-requests"
+                      className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      Lease Requests
                     </Link>
                     <Link
                       href="/bookings"
@@ -227,6 +238,11 @@ export default function Header() {
                   <Link href="/dashboard" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
                     Dashboard
                   </Link>
+                  {session?.user?.role === "owner" && (
+                    <Link href="/host/listings" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
+                      My Listings
+                    </Link>
+                  )}
                   <Link href="/messages" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium relative">
                     Messages
                     {unreadCount > 0 && (
@@ -234,6 +250,9 @@ export default function Header() {
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
+                  </Link>
+                  <Link href="/lease-requests" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
+                    Lease Requests
                   </Link>
                   <Link href="/bookings" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
                     My Bookings
