@@ -9,6 +9,7 @@ export interface IPost extends Document {
   Post?: mongoose.Types.ObjectId[]
   author: mongoose.Types.ObjectId
   likes?: mongoose.Types.ObjectId[]
+  comments?: mongoose.Types.ObjectId[]
   community: mongoose.Types.ObjectId
   createdAt?: Date
 }
@@ -45,6 +46,12 @@ const PostSchema = new Schema<IPost>(
         ref: "User",
       },
     ],
+      comments: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Comment",
+        },
+      ],
     community: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Community",
