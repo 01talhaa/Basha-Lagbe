@@ -102,6 +102,13 @@ export default function Header() {
                       My Listings
                     </Link>
                     <Link
+                      href="/messages"
+                      className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      Messages
+                    </Link>
+                    <Link
                       href="/bookings"
                       className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
                       onClick={() => setIsUserMenuOpen(false)}
@@ -192,6 +199,9 @@ export default function Header() {
                   </div>
                   <Link href="/dashboard" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
                     Dashboard
+                  </Link>
+                  <Link href="/messages" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
+                    Messages
                   </Link>
                   <Link href="/bookings" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
                     My Bookings

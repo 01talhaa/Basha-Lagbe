@@ -2,8 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { useParams, notFound, useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import BookingForm from "@/components/booking-form"
 import ReviewSection from "@/components/review-section"
+import ChatInterface from "@/components/chat-interface"
+import LoginAlert from "@/components/login-alert"
+import { Button } from "@/components/ui/button"
+import { MessageCircle } from "lucide-react"
 
 interface Listing {
   _id: string
@@ -35,10 +40,16 @@ interface Listing {
 export default function ListingPage() {
   const params = useParams()
   const router = useRouter()
+  const { data: session } = useSession()
   const [listing, setListing] = useState<Listing | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [mapUrl, setMapUrl] = useState("")
+  const [showChat, setShowChat] = useState(false)
+  const [conversationId, setConversationId] = useState<string | null>(null)
+  const [creatingConversation, setCreatingConversation] = useState(false)
+  const [showLoginAlert, setShowLoginAlert] = useState(false)
+  const [ownerName, setOwnerName] = useState<string>("Owner")
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -70,6 +81,41 @@ export default function ListingPage() {
     fetchListing()
   }, [params.id])
 
+  const handleContactOwner = async () => {
+    if (!session?.user) {
+      setShowLoginAlert(true)
+      return
+    }
+
+    if (!listing) return
+
+    setCreatingConversation(true)
+    try {
+      const res = await fetch("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          listingId: listing._id,
+          ownerId: listing.hostId,
+        }),
+      })
+
+      if (res.ok) {
+        const conversation = await res.json()
+        setConversationId(conversation._id)
+        setOwnerName(conversation.owner.name)
+        setShowChat(true)
+      } else {
+        alert("Failed to create conversation. Please try again.")
+      }
+    } catch (error) {
+      console.error("Error creating conversation:", error)
+      alert("Failed to create conversation. Please try again.")
+    } finally {
+      setCreatingConversation(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -98,6 +144,20 @@ export default function ListingPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Contact Owner Button - Fixed position - Show to all users */}
+        {listing && (!session?.user || session.user.id !== listing.hostId) && (
+          <div className="fixed bottom-8 left-8 z-40">
+            <Button
+              size="lg"
+              onClick={handleContactOwner}
+              disabled={creatingConversation}
+              className="shadow-lg"
+            >
+              <MessageCircle className="mr-2 h-5 w-5" />
+              {creatingConversation ? "Loading..." : "Contact Owner"}
+            </Button>
+          </div>
+        )}
         {/* Image Gallery */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <div className="md:col-span-2 h-96 bg-neutral-200 rounded-lg overflow-hidden">
@@ -242,6 +302,19 @@ export default function ListingPage() {
           </div>
         </div>
       </div>
+
+      {/* Chat Interface */}
+      {showChat && conversationId && session?.user && listing && (
+        <ChatInterface
+          conversationId={conversationId}
+          currentUserId={session.user.id}
+          recipientName={listing.hostId === session.user.id ? "Renter" : ownerName}
+          onClose={() => setShowChat(false)}
+        />
+      )}
+
+      {/* Login Alert Dialog */}
+      <LoginAlert open={showLoginAlert} onOpenChange={setShowLoginAlert} />
     </div>
   )
 }

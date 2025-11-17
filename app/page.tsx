@@ -52,7 +52,7 @@ export default function HomePage() {
       <WhatsAppButton />
       
       {/* Hero Section */}
-      <section className="relative bg-linear-to-br from-primary via-primary-dark to-accent-blue text-white overflow-hidden">
+      <section className="relative bg-gradient-to-br from-primary via-primary-dark to-accent-blue text-white overflow-hidden">
         {/* Decorative Elements */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utb3BhY2l0eT0iLjA1IiBzdHJva2Utd2lkdGg9IjEiLz48L2c+PC9zdmc+')] opacity-20"></div>
         
@@ -67,7 +67,7 @@ export default function HomePage() {
             
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
               Find Your Perfect
-              <span className="block bg-linear-to-r from-accent-gold to-yellow-300 bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-accent-gold to-yellow-300 bg-clip-text text-transparent">
                 Home Away From Home
               </span>
             </h1>
@@ -199,7 +199,7 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      {/* <section className="py-20 md:py-28 bg-linear-to-br from-primary via-primary-dark to-accent-blue text-white relative overflow-hidden">
+      {/* <section className="py-20 md:py-28 bg-gradient-to-br from-primary via-primary-dark to-accent-blue text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utb3BhY2l0eT0iLjA1IiBzdHJva2Utd2lkdGg9IjEiLz48L2c+PC9zdmc+')] opacity-20"></div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -256,7 +256,7 @@ export default function HomePage() {
       <TestimonialSlider />
 
       {/* CTA Section */}
-      <section className="relative bg-linear-to-br from-primary via-primary-dark to-accent-blue text-white overflow-hidden">
+      <section className="relative bg-gradient-to-br from-primary via-primary-dark to-accent-blue text-white overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjEiLz48L2c+PC9zdmc+')]"></div>
@@ -317,7 +317,7 @@ export default function HomePage() {
 
             <div className="hidden md:block">
               <div className="relative">
-                <div className="absolute inset-0 bg-linear-to-br from-accent-gold/20 to-transparent rounded-3xl transform rotate-3"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-accent-gold/20 to-transparent rounded-3xl transform rotate-3"></div>
                 <div className="relative bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-8 transform -rotate-2 hover:rotate-0 transition-transform duration-500">
                   <div className="space-y-6">
                     <div className="flex items-center justify-between p-4 bg-white/10 rounded-xl">
