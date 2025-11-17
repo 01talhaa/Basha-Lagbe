@@ -9,26 +9,39 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [pendingLeaseRequests, setPendingLeaseRequests] = useState(0)
   const { data: session, status } = useSession()
 
   useEffect(() => {
     if (session?.user) {
-      fetchUnreadCount()
+      fetchNotifications()
       // Poll every 10 seconds
-      const interval = setInterval(fetchUnreadCount, 10000)
+      const interval = setInterval(fetchNotifications, 10000)
       return () => clearInterval(interval)
     }
   }, [session])
 
-  const fetchUnreadCount = async () => {
+  const fetchNotifications = async () => {
     try {
-      const res = await fetch("/api/messages/unread-count")
-      if (res.ok) {
-        const data = await res.json()
+      const [messagesRes, leaseRequestsRes] = await Promise.all([
+        fetch("/api/messages/unread-count"),
+        fetch("/api/lease-requests"),
+      ])
+      
+      if (messagesRes.ok) {
+        const data = await messagesRes.json()
         setUnreadCount(data.count || 0)
       }
+      
+      if (leaseRequestsRes.ok) {
+        const leaseData = await leaseRequestsRes.json()
+        const pending = leaseData.filter(
+          (req: any) => req.status === "pending" && req.owner._id === session?.user?.id
+        ).length
+        setPendingLeaseRequests(pending)
+      }
     } catch (error) {
-      console.error("Error fetching unread count:", error)
+      console.error("Error fetching notifications:", error)
     }
   }
 
@@ -78,19 +91,28 @@ export default function Header() {
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                 >
-                  {session.user.image ? (
-                    <Image
-                      src={session.user.image}
-                      alt={session.user.name || "User"}
-                      width={36}
-                      height={36}
-                      className="rounded-full border-2 border-primary"
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-semibold">
-                      {session.user.name?.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  <div className="relative">
+                    {session.user.image ? (
+                      <Image
+                        src={session.user.image}
+                        alt={session.user.name || "User"}
+                        width={36}
+                        height={36}
+                        className="rounded-full border-2 border-primary"
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-semibold">
+                        {session.user.name?.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    {(unreadCount > 0 || pendingLeaseRequests > 0) && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center">
+                        <span className="text-white text-[9px] font-bold">
+                          {unreadCount + pendingLeaseRequests > 9 ? '9+' : unreadCount + pendingLeaseRequests}
+                        </span>
+                      </span>
+                    )}
+                  </div>
                   <svg
                     className={`w-4 h-4 text-neutral-600 transition-transform ${isUserMenuOpen ? "rotate-180" : ""}`}
                     fill="none"
@@ -141,10 +163,15 @@ export default function Header() {
                     </Link>
                     <Link
                       href="/lease-requests"
-                      className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                      className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors relative"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       Lease Requests
+                      {pendingLeaseRequests > 0 && (
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                          {pendingLeaseRequests > 9 ? '9+' : pendingLeaseRequests}
+                        </span>
+                      )}
                     </Link>
                     <Link
                       href="/bookings"
@@ -251,8 +278,13 @@ export default function Header() {
                       </span>
                     )}
                   </Link>
-                  <Link href="/lease-requests" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
+                  <Link href="/lease-requests" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium relative">
                     Lease Requests
+                    {pendingLeaseRequests > 0 && (
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                        {pendingLeaseRequests > 9 ? '9+' : pendingLeaseRequests}
+                      </span>
+                    )}
                   </Link>
                   <Link href="/bookings" className="block px-4 py-3 text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors font-medium">
                     My Bookings

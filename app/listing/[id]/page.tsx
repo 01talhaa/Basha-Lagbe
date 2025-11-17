@@ -50,6 +50,8 @@ export default function ListingPage() {
   const [creatingConversation, setCreatingConversation] = useState(false)
   const [showLoginAlert, setShowLoginAlert] = useState(false)
   const [ownerName, setOwnerName] = useState<string>("Owner")
+  const [isBooked, setIsBooked] = useState(false)
+  const [bookingInfo, setBookingInfo] = useState<any>(null)
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -63,6 +65,14 @@ export default function ListingPage() {
         }
 
         setListing(data.listing)
+        
+        // Check if listing is already booked
+        const bookingRes = await fetch(`/api/bookings/check?listingId=${data.listing._id}`)
+        if (bookingRes.ok) {
+          const bookingData = await bookingRes.json()
+          setIsBooked(bookingData.isBooked)
+          setBookingInfo(bookingData.booking)
+        }
         
         // Generate map URL from location
         const location = data.listing.location
@@ -300,6 +310,8 @@ export default function ListingPage() {
               onContactOwner={handleContactOwner}
               isContactingOwner={creatingConversation}
               isOwner={session?.user?.id === listing.hostId}
+              isBooked={isBooked}
+              bookingInfo={bookingInfo}
             />
           </div>
         </div>

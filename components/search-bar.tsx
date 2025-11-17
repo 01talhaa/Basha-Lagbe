@@ -9,23 +9,28 @@ export default function SearchBar() {
   const router = useRouter()
   const [location, setLocation] = useState("")
   const [moveInDate, setMoveInDate] = useState("")
-  const [leaseDuration, setLeaseDuration] = useState("12")
+  const [propertyType, setPropertyType] = useState("")
+  const [minPrice, setMinPrice] = useState("")
+  const [maxPrice, setMaxPrice] = useState("")
   const [bedrooms, setBedrooms] = useState("")
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    const params = new URLSearchParams({
-      location: location || "",
-      moveInDate: moveInDate || "",
-      leaseDuration: leaseDuration || "12",
-      bedrooms: bedrooms || "",
-    })
+    const params = new URLSearchParams()
+    
+    if (location) params.append("location", location)
+    if (moveInDate) params.append("moveInDate", moveInDate)
+    if (propertyType) params.append("propertyType", propertyType)
+    if (minPrice) params.append("minPrice", minPrice)
+    if (maxPrice) params.append("maxPrice", maxPrice)
+    if (bedrooms) params.append("bedrooms", bedrooms)
+    
     router.push(`/search?${params.toString()}`)
   }
 
   return (
     <form onSubmit={handleSearch} className="bg-white rounded-lg shadow-lg p-6 md:p-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
         {/* Location */}
         <div>
           <label className="block text-sm font-semibold text-neutral-700 mb-2">Location</label>
@@ -38,6 +43,7 @@ export default function SearchBar() {
           />
         </div>
 
+        {/* Move-in Date */}
         <div>
           <label className="block text-sm font-semibold text-neutral-700 mb-2">Move-in Date</label>
           <input
@@ -48,15 +54,42 @@ export default function SearchBar() {
           />
         </div>
 
+        {/* Property Type */}
         <div>
-          <label className="block text-sm font-semibold text-neutral-700 mb-2">Lease Duration</label>
-          <select value={leaseDuration} onChange={(e) => setLeaseDuration(e.target.value)} className="input-field">
-            <option value="3">3 months</option>
-            <option value="6">6 months</option>
-            <option value="12">12 months</option>
-            <option value="24">24 months</option>
-            <option value="36">36 months</option>
+          <label className="block text-sm font-semibold text-neutral-700 mb-2">Property Type</label>
+          <select value={propertyType} onChange={(e) => setPropertyType(e.target.value)} className="input-field">
+            <option value="">Any</option>
+            <option value="apartment">Apartment</option>
+            <option value="house">House</option>
+            <option value="studio">Studio</option>
+            <option value="room">Room</option>
           </select>
+        </div>
+
+        {/* Min Price */}
+        <div>
+          <label className="block text-sm font-semibold text-neutral-700 mb-2">Min Price (Tk)</label>
+          <input
+            type="number"
+            placeholder="Min"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            className="input-field"
+            min="0"
+          />
+        </div>
+
+        {/* Max Price */}
+        <div>
+          <label className="block text-sm font-semibold text-neutral-700 mb-2">Max Price (Tk)</label>
+          <input
+            type="number"
+            placeholder="Max"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            className="input-field"
+            min="0"
+          />
         </div>
 
         {/* Bedrooms */}

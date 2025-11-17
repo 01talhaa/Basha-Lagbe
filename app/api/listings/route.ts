@@ -16,10 +16,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const hostId = searchParams.get("hostId")
     const city = searchParams.get("city")
-    const propertyType = searchParams.get("propertyType")
+    const propertyTypes = searchParams.getAll("propertyType")
     const minPrice = searchParams.get("minPrice")
     const maxPrice = searchParams.get("maxPrice")
     const bedrooms = searchParams.get("bedrooms")
+    const bathrooms = searchParams.get("bathrooms")
+    const amenities = searchParams.get("amenities")
 
     // Build query
     const query: any = {}
@@ -32,8 +34,8 @@ export async function GET(request: NextRequest) {
       query["location.city"] = { $regex: city, $options: "i" }
     }
 
-    if (propertyType) {
-      query.propertyType = propertyType
+    if (propertyTypes && propertyTypes.length > 0) {
+      query.propertyType = { $in: propertyTypes }
     }
 
     if (minPrice || maxPrice) {
@@ -43,7 +45,16 @@ export async function GET(request: NextRequest) {
     }
 
     if (bedrooms) {
-      query.bedrooms = Number(bedrooms)
+      query.bedrooms = { $gte: Number(bedrooms) }
+    }
+
+    if (bathrooms) {
+      query.bathrooms = { $gte: Number(bathrooms) }
+    }
+
+    if (amenities) {
+      const amenitiesList = amenities.split(",").map(a => a.trim())
+      query.amenities = { $all: amenitiesList }
     }
 
     const listings = await Listing.find(query).sort({ createdAt: -1 }).lean()

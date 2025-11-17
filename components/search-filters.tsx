@@ -25,20 +25,20 @@ export default function SearchFilters({ filters, setFilters }: SearchFiltersProp
         <h3 className="font-semibold mb-3">Price Range</h3>
         <div className="space-y-2">
           <label className="flex items-center gap-2">
-            <input type="radio" name="price" onChange={() => handlePriceChange(0, 100)} className="w-4 h-4" />
-            <span className="text-sm">Under $100</span>
+            <input type="radio" name="price" onChange={() => handlePriceChange(0, 10000)} className="w-4 h-4" />
+            <span className="text-sm">Under Tk 10,000</span>
           </label>
           <label className="flex items-center gap-2">
-            <input type="radio" name="price" onChange={() => handlePriceChange(100, 200)} className="w-4 h-4" />
-            <span className="text-sm">$100 - $200</span>
+            <input type="radio" name="price" onChange={() => handlePriceChange(10000, 20000)} className="w-4 h-4" />
+            <span className="text-sm">Tk 10,000 - 20,000</span>
           </label>
           <label className="flex items-center gap-2">
-            <input type="radio" name="price" onChange={() => handlePriceChange(200, 500)} className="w-4 h-4" />
-            <span className="text-sm">$200 - $500</span>
+            <input type="radio" name="price" onChange={() => handlePriceChange(20000, 50000)} className="w-4 h-4" />
+            <span className="text-sm">Tk 20,000 - 50,000</span>
           </label>
           <label className="flex items-center gap-2">
-            <input type="radio" name="price" onChange={() => handlePriceChange(500, 10000)} className="w-4 h-4" />
-            <span className="text-sm">Over $500</span>
+            <input type="radio" name="price" onChange={() => handlePriceChange(50000, 1000000)} className="w-4 h-4" />
+            <span className="text-sm">Over Tk 50,000</span>
           </label>
         </div>
       </div>
@@ -51,8 +51,9 @@ export default function SearchFilters({ filters, setFilters }: SearchFiltersProp
             <label key={type} className="flex items-center gap-2">
               <input
                 type="checkbox"
+                checked={(filters.propertyType || []).includes(type)}
                 onChange={(e) => {
-                  const types = filters.propertyType || []
+                  const types = (filters.propertyType as string[]) || []
                   if (e.target.checked) {
                     setFilters({ ...filters, propertyType: [...types, type] })
                   } else {

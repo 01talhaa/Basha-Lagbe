@@ -1,11 +1,36 @@
+"use client"
+
 import Link from "next/link"
 import type { Listing } from "@/data/types"
+import { Badge } from "@/components/ui/badge"
+import { useEffect, useState } from "react"
 
 interface ListingCardProps {
   listing: Listing
 }
 
 export default function ListingCard({ listing }: ListingCardProps) {
+  const [isBooked, setIsBooked] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const checkBookingStatus = async () => {
+      try {
+        const res = await fetch(`/api/bookings/check?listingId=${listing.id}`)
+        if (res.ok) {
+          const data = await res.json()
+          setIsBooked(data.isBooked)
+        }
+      } catch (error) {
+        console.error("Error checking booking status:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkBookingStatus()
+  }, [listing.id])
+
   return (
     <Link href={`/listing/${listing.id}`}>
       <div className="card overflow-hidden cursor-pointer">
@@ -16,6 +41,11 @@ export default function ListingCard({ listing }: ListingCardProps) {
             alt={listing.title}
             className="w-full h-full object-cover"
           />
+          {isBooked && (
+            <div className="absolute top-3 left-3">
+              <Badge className="bg-red-500 text-white font-semibold">Already Booked</Badge>
+            </div>
+          )}
           <div className="absolute top-3 right-3 bg-white rounded-full px-3 py-1 flex items-center gap-1">
             <span className="text-sm font-semibold">★ {listing.rating}</span>
           </div>

@@ -9,6 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 import { Calendar, MapPin, DollarSign, FileText, Home, User } from "lucide-react"
 
 interface Booking {
@@ -50,6 +60,10 @@ export default function BookingsPage() {
   const { data: session, status } = useSession()
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+  const [cancellationReason, setCancellationReason] = useState("")
+  const [cancelling, setCancelling] = useState(false)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -121,6 +135,41 @@ export default function BookingsPage() {
     return `${months} month${months !== 1 ? "s" : ""}`
   }
 
+  const handleCancelBooking = async () => {
+    if (!selectedBooking || !cancellationReason.trim()) {
+      alert("Please provide a reason for cancellation")
+      return
+    }
+
+    setCancelling(true)
+    try {
+      const res = await fetch(`/api/bookings/${selectedBooking._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "cancelled",
+          cancellationReason,
+        }),
+      })
+
+      if (res.ok) {
+        setShowCancelDialog(false)
+        setCancellationReason("")
+        setSelectedBooking(null)
+        alert("Booking cancelled successfully. The listing is now available for new bookings.")
+        await fetchBookings()
+      } else {
+        const data = await res.json()
+        alert(data.error || "Failed to cancel booking")
+      }
+    } catch (error) {
+      console.error("Error cancelling booking:", error)
+      alert("Failed to cancel booking")
+    } finally {
+      setCancelling(false)
+    }
+  }
+
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
@@ -163,7 +212,6 @@ export default function BookingsPage() {
               </div>
               <div className="flex flex-col gap-2 items-end">
                 {getStatusBadge(booking.status)}
-                {getPaymentBadge(booking.paymentStatus)}
               </div>
             </div>
 
@@ -237,6 +285,18 @@ export default function BookingsPage() {
                     View Agreement
                   </Button>
                 </a>
+              )}
+              {isOwnerView && booking.status === "active" && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedBooking(booking)
+                    setShowCancelDialog(true)
+                  }}
+                >
+                  Cancel Booking
+                </Button>
               )}
             </div>
           </div>
@@ -364,6 +424,51 @@ export default function BookingsPage() {
           )}
         </Tabs>
       </div>
+
+      {/* Cancel Booking Dialog */}
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Booking</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for cancelling this booking. This will end the lease and make the listing available for new bookings.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="reason">Cancellation Reason *</Label>
+              <Textarea
+                id="reason"
+                placeholder="Enter the reason for cancelling this booking..."
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                rows={4}
+                className="resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCancelDialog(false)
+                setCancellationReason("")
+                setSelectedBooking(null)
+              }}
+              disabled={cancelling}
+            >
+              Keep Booking
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCancelBooking}
+              disabled={cancelling || !cancellationReason.trim()}
+            >
+              {cancelling ? "Cancelling..." : "Confirm Cancellation"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

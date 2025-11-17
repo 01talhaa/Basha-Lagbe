@@ -53,14 +53,16 @@ export default function DashboardPage() {
   const fetchDashboardStats = async () => {
     try {
       // Fetch all stats in parallel
-      const [messagesRes, leaseRequestsRes, listingsRes] = await Promise.all([
+      const [messagesRes, leaseRequestsRes, bookingsRes, listingsRes] = await Promise.all([
         fetch("/api/messages/unread-count"),
         fetch("/api/lease-requests"),
+        fetch("/api/bookings"),
         session?.user?.role === "owner" ? fetch("/api/listings") : Promise.resolve(null),
       ])
 
       const messagesData = messagesRes.ok ? await messagesRes.json() : { count: 0 }
       const leaseRequestsData = leaseRequestsRes.ok ? await leaseRequestsRes.json() : []
+      const bookingsData = bookingsRes.ok ? await bookingsRes.json() : []
       const listingsData = listingsRes ? await listingsRes.json() : []
 
       // Calculate lease request stats
@@ -71,12 +73,14 @@ export default function DashboardPage() {
         (req: any) => req.owner._id === session?.user?.id
       )
       const pendingRequests = leaseRequestsData.filter(
-        (req: any) => req.status === "pending"
+        (req: any) => req.status === "pending" && req.owner._id === session?.user?.id
       )
 
-      // Calculate completed bookings from lease requests
-      const completedBookings = leaseRequestsData.filter(
-        (req: any) => req.status === "agreement_signed" || req.status === "completed"
+      // Calculate booking stats from actual bookings
+      const userBookings = bookingsData.filter(
+        (booking: any) => 
+          booking.renter._id === session?.user?.id || 
+          booking.owner._id === session?.user?.id
       )
 
       setStats({
@@ -90,9 +94,9 @@ export default function DashboardPage() {
           pending: pendingRequests.length,
         },
         bookings: {
-          total: completedBookings.length,
-          upcoming: completedBookings.filter((req: any) => req.status === "agreement_signed").length,
-          completed: completedBookings.filter((req: any) => req.status === "completed").length,
+          total: userBookings.length,
+          upcoming: userBookings.filter((b: any) => b.status === "active").length,
+          completed: userBookings.filter((b: any) => b.status === "completed").length,
         },
         listings: session?.user?.role === "owner" 
           ? {

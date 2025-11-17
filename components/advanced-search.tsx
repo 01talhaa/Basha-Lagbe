@@ -24,12 +24,11 @@ export default function AdvancedSearch() {
     e.preventDefault()
     const params = new URLSearchParams()
 
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value && key !== "amenities") {
-        params.append(key, String(value))
-      }
-    })
-
+    if (filters.location) params.append("location", filters.location)
+    if (filters.bedrooms) params.append("bedrooms", filters.bedrooms)
+    if (filters.bathrooms) params.append("bathrooms", filters.bathrooms)
+    if (filters.priceMin) params.append("minPrice", filters.priceMin)
+    if (filters.priceMax) params.append("maxPrice", filters.priceMax)
     if (filters.amenities.length > 0) {
       params.append("amenities", filters.amenities.join(","))
     }
@@ -92,7 +91,7 @@ export default function AdvancedSearch() {
                 min="0"
                 value={filters.priceMin}
                 onChange={(e) => setFilters({ ...filters, priceMin: e.target.value })}
-                placeholder="$0"
+                placeholder="Tk 0"
                 className="input-field"
               />
             </div>
@@ -103,7 +102,7 @@ export default function AdvancedSearch() {
                 min="0"
                 value={filters.priceMax}
                 onChange={(e) => setFilters({ ...filters, priceMax: e.target.value })}
-                placeholder="$10000"
+                placeholder="Tk 100,000"
                 className="input-field"
               />
             </div>

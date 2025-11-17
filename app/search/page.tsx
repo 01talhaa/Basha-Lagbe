@@ -24,14 +24,42 @@ interface Listing {
   reviewCount: number
 }
 
+interface BookingStatus {
+  [listingId: string]: boolean
+}
+
 export default function SearchPage() {
   const searchParams = useSearchParams()
   const [listings, setListings] = useState<Listing[]>([])
-  const [filters, setFilters] = useState<SearchFiltersType>({
-    location: searchParams.get("location") || "",
-    sortBy: "price-asc",
+  const [filters, setFilters] = useState<SearchFiltersType>(() => {
+    const propertyTypeParam = searchParams.get("propertyType")
+    return {
+      location: searchParams.get("location") || "",
+      propertyType: propertyTypeParam ? [propertyTypeParam] : undefined,
+      priceMin: searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : undefined,
+      priceMax: searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : undefined,
+      bedrooms: searchParams.get("bedrooms") ? Number(searchParams.get("bedrooms")) : undefined,
+      sortBy: "price-asc",
+    }
   })
   const [loading, setLoading] = useState(true)
+  const [bookingStatus, setBookingStatus] = useState<BookingStatus>({})
+
+  // Sync URL params with filters when URL changes
+  useEffect(() => {
+    const propertyTypeParam = searchParams.get("propertyType")
+    const newFilters: SearchFiltersType = {
+      location: searchParams.get("location") || "",
+      sortBy: "price-asc",
+    }
+    
+    if (propertyTypeParam) newFilters.propertyType = [propertyTypeParam]
+    if (searchParams.get("minPrice")) newFilters.priceMin = Number(searchParams.get("minPrice"))
+    if (searchParams.get("maxPrice")) newFilters.priceMax = Number(searchParams.get("maxPrice"))
+    if (searchParams.get("bedrooms")) newFilters.bedrooms = Number(searchParams.get("bedrooms"))
+    
+    setFilters(newFilters)
+  }, [searchParams])
 
   useEffect(() => {
     const performSearch = async () => {
@@ -39,13 +67,24 @@ export default function SearchPage() {
       try {
         const params = new URLSearchParams()
         if (filters.location) params.append("city", filters.location)
-        if (filters.propertyType) params.append("propertyType", filters.propertyType)
-        if (filters.minPrice) params.append("minPrice", filters.minPrice.toString())
-        if (filters.maxPrice) params.append("maxPrice", filters.maxPrice.toString())
+        if (filters.propertyType && Array.isArray(filters.propertyType) && filters.propertyType.length > 0) {
+          filters.propertyType.forEach(type => params.append("propertyType", type))
+        }
+        if (filters.priceMin) params.append("minPrice", filters.priceMin.toString())
+        if (filters.priceMax) params.append("maxPrice", filters.priceMax.toString())
         if (filters.bedrooms) params.append("bedrooms", filters.bedrooms.toString())
+        if (filters.bathrooms) params.append("bathrooms", filters.bathrooms.toString())
+        if (filters.amenities && filters.amenities.length > 0) {
+          params.append("amenities", filters.amenities.join(","))
+        }
+
+        console.log("Search params:", params.toString())
+        console.log("Filters:", filters)
 
         const response = await fetch(`/api/listings?${params.toString()}`)
         const data = await response.json()
+        
+        console.log("API Response:", data)
         
         if (data.success) {
           let results = data.listings
@@ -60,6 +99,27 @@ export default function SearchPage() {
           }
 
           setListings(results)
+          
+          // Fetch booking status for all listings
+          const statusChecks = results.map(async (listing: Listing) => {
+            try {
+              const res = await fetch(`/api/bookings/check?listingId=${listing._id}`)
+              if (res.ok) {
+                const data = await res.json()
+                return { id: listing._id, isBooked: data.isBooked }
+              }
+            } catch (error) {
+              console.error(`Error checking booking status for ${listing._id}:`, error)
+            }
+            return { id: listing._id, isBooked: false }
+          })
+          
+          const statuses = await Promise.all(statusChecks)
+          const statusMap: BookingStatus = {}
+          statuses.forEach(status => {
+            if (status) statusMap[status.id] = status.isBooked
+          })
+          setBookingStatus(statusMap)
         }
       } catch (error) {
         console.error("Failed to fetch listings:", error)
@@ -112,8 +172,13 @@ export default function SearchPage() {
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                       <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full text-sm font-semibold text-primary">
-                        ${listing.pricePerMonth}/mo
+                        Tk {listing.pricePerMonth.toLocaleString()}/mo
                       </div>
+                      {bookingStatus[listing._id] && (
+                        <div className="absolute top-16 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                          Already Booked
+                        </div>
+                      )}
                       {listing.rating && (
                         <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-lg text-white text-sm flex items-center gap-1">
                           <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">

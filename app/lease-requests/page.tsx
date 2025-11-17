@@ -44,6 +44,7 @@ interface LeaseRequest {
   }
   status: string
   message: string
+  moveInDate?: string
   visitDate?: string
   agreementUrl?: string
   agreementSignedAt?: string
@@ -204,6 +205,14 @@ export default function LeaseRequestsPage() {
                         <p className="text-sm text-neutral-600 mt-1">{request.message}</p>
                       </div>
 
+                      {request.moveInDate && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4 text-green-600" />
+                          <span className="font-semibold">Requested Move-in Date:</span>
+                          <span>{new Date(request.moveInDate).toLocaleDateString()}</span>
+                        </div>
+                      )}
+
                       {request.visitDate && (
                         <div className="flex items-center gap-2 text-sm">
                           <Calendar className="h-4 w-4 text-blue-600" />
@@ -297,9 +306,17 @@ export default function LeaseRequestsPage() {
                   <CardContent>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-sm font-semibold text-neutral-700">Renter's Message:</p>
+                        <p className="text-sm font-semibold text-neutral-700">Request Message:</p>
                         <p className="text-sm text-neutral-600 mt-1">{request.message}</p>
                       </div>
+
+                      {request.moveInDate && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4 text-green-600" />
+                          <span className="font-semibold">Requested Move-in Date:</span>
+                          <span>{new Date(request.moveInDate).toLocaleDateString()}</span>
+                        </div>
+                      )}
 
                       {request.visitDate && (
                         <div className="flex items-center gap-2 text-sm">
