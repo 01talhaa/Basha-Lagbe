@@ -62,6 +62,7 @@ export default function NewListingPage() {
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [currentRule, setCurrentRule] = useState("")
+  const [isDuplicate, setIsDuplicate] = useState(false)
   
   const [formData, setFormData] = useState<FormData>({
     title: "",
@@ -86,6 +87,28 @@ export default function NewListingPage() {
   })
 
   const [mapUrl, setMapUrl] = useState("")
+
+  // Check for duplicate listing data on component mount
+  useEffect(() => {
+    const duplicateData = sessionStorage.getItem("duplicateListingData")
+    if (duplicateData) {
+      try {
+        const parsedData = JSON.parse(duplicateData)
+        setFormData(parsedData)
+        setIsDuplicate(true)
+        
+        // Set image previews if images exist
+        if (parsedData.images && parsedData.images.length > 0) {
+          setImagePreviews(parsedData.images)
+        }
+        
+        // Clear the session storage
+        sessionStorage.removeItem("duplicateListingData")
+      } catch (error) {
+        console.error("Error loading duplicate data:", error)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -266,8 +289,21 @@ export default function NewListingPage() {
     <div className="min-h-screen bg-neutral-50 py-8">
       <div className="max-w-5xl mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-neutral-900 mb-2">Create New Listing</h1>
-          <p className="text-neutral-600">Fill in the details to list your property</p>
+          <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+            {isDuplicate ? "Duplicate Listing" : "Create New Listing"}
+          </h1>
+          <p className="text-neutral-600">
+            {isDuplicate 
+              ? "Edit the details below to create a new listing based on your previous one" 
+              : "Fill in the details to list your property"}
+          </p>
+          {isDuplicate && (
+            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800 text-sm">
+                ℹ️ This listing is duplicated from an existing one. Review and modify the details as needed.
+              </p>
+            </div>
+          )}
         </div>
 
         {error && (

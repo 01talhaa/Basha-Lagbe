@@ -28,6 +28,7 @@ export default function HostListingsPage() {
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [duplicating, setDuplicating] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -80,6 +81,52 @@ export default function HostListingsPage() {
       alert("Failed to delete listing")
     } finally {
       setDeleting(null)
+    }
+  }
+
+  const handleDuplicate = async (id: string) => {
+    if (!confirm("Do you want to duplicate this listing? You'll be redirected to edit the details.")) return
+
+    setDuplicating(id)
+    try {
+      const response = await fetch(`/api/listings/${id}`)
+      const data = await response.json()
+
+      if (data.success) {
+        const listing = data.listing
+        // Store the listing data in sessionStorage to populate the new listing form
+        const duplicateData = {
+          title: `${listing.title} (Copy)`,
+          description: listing.description,
+          address: listing.location.address || "",
+          city: listing.location.city,
+          state: listing.location.state,
+          zipCode: listing.location.zipCode || "",
+          latitude: listing.location.coordinates?.[1] || 23.8103,
+          longitude: listing.location.coordinates?.[0] || 90.4125,
+          propertyType: listing.propertyType,
+          bedrooms: listing.bedrooms,
+          bathrooms: listing.bathrooms,
+          maxGuests: listing.maxGuests || 2,
+          pricePerMonth: listing.pricePerMonth,
+          securityDeposit: listing.securityDeposit || 0,
+          maintenanceFee: listing.maintenanceFee || 0,
+          amenities: listing.amenities || [],
+          rules: listing.rules || [],
+          images: listing.images || [],
+          startDate: new Date().toISOString().split("T")[0],
+          endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+        }
+        sessionStorage.setItem("duplicateListingData", JSON.stringify(duplicateData))
+        router.push("/host/new-listing")
+      } else {
+        alert("Failed to fetch listing details")
+      }
+    } catch (error) {
+      console.error("Duplicate error:", error)
+      alert("Failed to duplicate listing")
+    } finally {
+      setDuplicating(null)
     }
   }
 
@@ -136,26 +183,38 @@ export default function HostListingsPage() {
                     <span className="font-bold text-lg">৳{listing.pricePerMonth.toLocaleString()}/mo</span>
                     <span className="text-sm text-neutral-600">★ {listing.rating} ({listing.reviewCount})</span>
                   </div>
-                  <div className="flex gap-2">
-                    <Link
-                      href={`/listing/${listing._id}`}
-                      className="flex-1 px-3 py-2 bg-primary text-white rounded-lg text-center text-sm hover:bg-primary-dark transition-colors"
-                    >
-                      View
-                    </Link>
-                    <Link
-                      href={`/host/listings/${listing._id}/edit`}
-                      className="flex-1 px-3 py-2 bg-neutral-100 text-neutral-900 rounded-lg text-center text-sm hover:bg-neutral-200 transition-colors"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(listing._id)}
-                      disabled={deleting === listing._id}
-                      className="px-3 py-2 bg-red-50 text-red-600 rounded-lg text-sm hover:bg-red-100 transition-colors disabled:opacity-50"
-                    >
-                      {deleting === listing._id ? "..." : "Delete"}
-                    </button>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <Link
+                        href={`/listing/${listing._id}`}
+                        className="flex-1 px-3 py-2 bg-primary text-white rounded-lg text-center text-sm hover:bg-primary-dark transition-colors"
+                      >
+                        View
+                      </Link>
+                      <Link
+                        href={`/host/listings/${listing._id}/edit`}
+                        className="flex-1 px-3 py-2 bg-neutral-100 text-neutral-900 rounded-lg text-center text-sm hover:bg-neutral-200 transition-colors"
+                      >
+                        Edit
+                      </Link>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleDuplicate(listing._id)}
+                        disabled={duplicating === listing._id}
+                        className="flex-1 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm hover:bg-blue-100 transition-colors disabled:opacity-50"
+                        title="Duplicate this listing"
+                      >
+                        {duplicating === listing._id ? "Duplicating..." : "Duplicate"}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(listing._id)}
+                        disabled={deleting === listing._id}
+                        className="flex-1 px-3 py-2 bg-red-50 text-red-600 rounded-lg text-sm hover:bg-red-100 transition-colors disabled:opacity-50"
+                      >
+                        {deleting === listing._id ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
