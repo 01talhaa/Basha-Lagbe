@@ -67,6 +67,9 @@ export default function Header() {
                 List Property
               </Link>
             )}
+            <Link href="/community" className="text-neutral-700 hover:text-primary transition-colors font-medium">
+              Community
+            </Link>
             <Link href="/about" className="text-neutral-700 hover:text-primary transition-colors font-medium">
               About Us
             </Link>

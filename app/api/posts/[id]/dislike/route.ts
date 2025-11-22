@@ -4,7 +4,7 @@ import Post from "@/models/Post"
 import { auth } from "@/lib/auth"
 
 /**
- * POST /api/posts/[id]/like - Like or unlike a post
+ * POST /api/posts/[id]/dislike - Dislike or remove dislike from a post
  */
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
@@ -25,27 +25,27 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     const userId = session.user.id
 
-    // Check if user already liked
-    const likeIndex = post.likes.findIndex(
-      (like: any) => like.userId.toString() === userId
-    )
-
-    // Check if user disliked
+    // Check if user already disliked
     const dislikeIndex = post.dislikes.findIndex(
       (dislike: any) => dislike.userId.toString() === userId
     )
 
-    // Remove dislike if exists
-    if (dislikeIndex !== -1) {
-      post.dislikes.splice(dislikeIndex, 1)
+    // Check if user liked
+    const likeIndex = post.likes.findIndex(
+      (like: any) => like.userId.toString() === userId
+    )
+
+    // Remove like if exists
+    if (likeIndex !== -1) {
+      post.likes.splice(likeIndex, 1)
     }
 
-    if (likeIndex !== -1) {
-      // Unlike: remove like
-      post.likes.splice(likeIndex, 1)
+    if (dislikeIndex !== -1) {
+      // Remove dislike
+      post.dislikes.splice(dislikeIndex, 1)
     } else {
-      // Like: add like
-      post.likes.push({ userId, timestamp: new Date() })
+      // Add dislike
+      post.dislikes.push({ userId, timestamp: new Date() })
     }
 
     await post.save()
@@ -57,10 +57,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({
       success: true,
       post: updatedPost,
-      message: likeIndex !== -1 ? "Post unliked" : "Post liked",
+      message: dislikeIndex !== -1 ? "Dislike removed" : "Post disliked",
     })
   } catch (error) {
-    console.error("Like post error:", error)
-    return NextResponse.json({ error: "Failed to like post" }, { status: 500 })
+    console.error("Dislike post error:", error)
+    return NextResponse.json({ error: "Failed to dislike post" }, { status: 500 })
   }
 }

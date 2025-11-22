@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
 import Image from "next/image"
+import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -137,7 +138,7 @@ export default function BookingsPage() {
 
   const handleCancelBooking = async () => {
     if (!selectedBooking || !cancellationReason.trim()) {
-      alert("Please provide a reason for cancellation")
+      toast.error("Please provide a reason for cancellation")
       return
     }
 
@@ -156,15 +157,15 @@ export default function BookingsPage() {
         setShowCancelDialog(false)
         setCancellationReason("")
         setSelectedBooking(null)
-        alert("Booking cancelled successfully. The listing is now available for new bookings.")
+        toast.success("Booking cancelled successfully. The listing is now available for new bookings.")
         await fetchBookings()
       } else {
         const data = await res.json()
-        alert(data.error || "Failed to cancel booking")
+        toast.error(data.error || "Failed to cancel booking")
       }
     } catch (error) {
       console.error("Error cancelling booking:", error)
-      alert("Failed to cancel booking")
+      toast.error("Failed to cancel booking")
     } finally {
       setCancelling(false)
     }

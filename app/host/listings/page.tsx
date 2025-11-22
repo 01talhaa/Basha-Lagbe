@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
+import { toast } from "sonner"
 
 interface Listing {
   _id: string
@@ -73,12 +74,13 @@ export default function HostListingsPage() {
 
       if (response.ok) {
         setListings((prev) => prev.filter((listing) => listing._id !== id))
+        toast.success("Listing deleted successfully")
       } else {
-        alert("Failed to delete listing")
+        toast.error("Failed to delete listing")
       }
     } catch (error) {
       console.error("Delete error:", error)
-      alert("Failed to delete listing")
+      toast.error("Failed to delete listing")
     } finally {
       setDeleting(null)
     }
@@ -120,11 +122,11 @@ export default function HostListingsPage() {
         sessionStorage.setItem("duplicateListingData", JSON.stringify(duplicateData))
         router.push("/host/new-listing")
       } else {
-        alert("Failed to fetch listing details")
+        toast.error("Failed to fetch listing details")
       }
     } catch (error) {
       console.error("Duplicate error:", error)
-      alert("Failed to duplicate listing")
+      toast.error("Failed to duplicate listing")
     } finally {
       setDuplicating(null)
     }

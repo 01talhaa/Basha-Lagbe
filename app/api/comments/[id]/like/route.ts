@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/mongodb"
-import Post from "@/models/Post"
+import Comment from "@/models/Comment"
 import { auth } from "@/lib/auth"
 
 /**
- * POST /api/posts/[id]/like - Like or unlike a post
+ * POST /api/comments/[id]/like - Like or unlike a comment
  */
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
@@ -17,50 +17,50 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     await dbConnect()
 
-    const post = await Post.findById(params.id)
+    const comment = await Comment.findById(params.id)
 
-    if (!post) {
-      return NextResponse.json({ error: "Post not found" }, { status: 404 })
+    if (!comment) {
+      return NextResponse.json({ error: "Comment not found" }, { status: 404 })
     }
 
     const userId = session.user.id
 
     // Check if user already liked
-    const likeIndex = post.likes.findIndex(
+    const likeIndex = comment.likes.findIndex(
       (like: any) => like.userId.toString() === userId
     )
 
     // Check if user disliked
-    const dislikeIndex = post.dislikes.findIndex(
+    const dislikeIndex = comment.dislikes.findIndex(
       (dislike: any) => dislike.userId.toString() === userId
     )
 
     // Remove dislike if exists
     if (dislikeIndex !== -1) {
-      post.dislikes.splice(dislikeIndex, 1)
+      comment.dislikes.splice(dislikeIndex, 1)
     }
 
     if (likeIndex !== -1) {
       // Unlike: remove like
-      post.likes.splice(likeIndex, 1)
+      comment.likes.splice(likeIndex, 1)
     } else {
       // Like: add like
-      post.likes.push({ userId, timestamp: new Date() })
+      comment.likes.push({ userId, timestamp: new Date() })
     }
 
-    await post.save()
+    await comment.save()
 
-    const updatedPost = await Post.findById(params.id)
+    const updatedComment = await Comment.findById(params.id)
       .populate("author", "name email role")
       .lean()
 
     return NextResponse.json({
       success: true,
-      post: updatedPost,
-      message: likeIndex !== -1 ? "Post unliked" : "Post liked",
+      comment: updatedComment,
+      message: likeIndex !== -1 ? "Comment unliked" : "Comment liked",
     })
   } catch (error) {
-    console.error("Like post error:", error)
-    return NextResponse.json({ error: "Failed to like post" }, { status: 500 })
+    console.error("Like comment error:", error)
+    return NextResponse.json({ error: "Failed to like comment" }, { status: 500 })
   }
 }
