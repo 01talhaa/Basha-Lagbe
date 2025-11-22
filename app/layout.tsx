@@ -6,6 +6,7 @@ import Header from "@/components/header"
 import Footer from "@/components/footer"
 import Chatbot from "@/components/chatbot"
 import SessionProvider from "@/components/session-provider"
+import { Toaster } from "@/components/ui/sonner"
 
 const geistSans = Geist({ subsets: ["latin"] })
 const geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -29,6 +30,7 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
           <Footer />
           <Chatbot />
+          <Toaster position="top-right" richColors closeButton />
         </SessionProvider>
       </body>
     </html>

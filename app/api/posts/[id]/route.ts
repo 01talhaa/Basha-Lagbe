@@ -1,58 +1,55 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/mongodb"
 import Post from "@/models/Post"
-import { requireAuth } from "@/lib/session"
+import Comment from "@/models/Comment"
+import Reply from "@/models/Reply"
+import { auth } from "@/lib/auth"
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+/**
+ * DELETE /api/posts/[id] - Delete a post (author only)
+ */
+
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth()
+    const session = await auth()
+
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 })
+    }
 
     await dbConnect()
 
-    const { id } = params
-    if (!id) {
-      return NextResponse.json({ error: "Post id is required" }, { status: 400 })
-    }
+    const post = await Post.findById(params.id)
 
-    const post = await Post.findById(id)
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 })
     }
 
-    // Allow only the author or an admin to update
-    const isAuthor = post.author && post.author.toString() === user.id
-    const isAdmin = (user.role as string) === "admin"
-    if (!isAuthor && !isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    // Check if user is the author
+    if (post.author.toString() !== session.user.id) {
+      return NextResponse.json(
+        { error: "You can only delete your own posts" },
+        { status: 403 }
+      )
     }
 
-    const body = await req.json()
-    const updates: Partial<{ text: string; image: string[] }> = {}
+    // Delete all replies to comments on this post
+    const comments = await Comment.find({ post: params.id })
+    const commentIds = comments.map((c) => c._id)
+    await Reply.deleteMany({ comment: { $in: commentIds } })
 
-    if (typeof body.text === "string") updates.text = body.text
-    if (body.image !== undefined) {
-      updates.image = Array.isArray(body.image) ? body.image : [body.image].filter(Boolean)
-    }
+    // Delete all comments on this post
+    await Comment.deleteMany({ post: params.id })
 
-    // Apply updates
-    if (updates.text !== undefined) post.text = updates.text
-    if (updates.image !== undefined) post.image = updates.image as any
+    // Delete the post
+    await Post.findByIdAndDelete(params.id)
 
-    await post.save()
-
-    const updated = await Post.findById(post._id)
-      .populate("author", "name image")
-      .populate("likes", "_id")
-
-    return NextResponse.json(updated, { status: 200 })
-  } catch (error: any) {
-    if (error?.message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-    console.error("PATCH /api/posts/[id] error:", error)
-    return NextResponse.json({ error: "Server error" }, { status: 500 })
+    return NextResponse.json({
+      success: true,
+      message: "Post deleted successfully",
+    })
+  } catch (error) {
+    console.error("Delete post error:", error)
+    return NextResponse.json({ error: "Failed to delete post" }, { status: 500 })
   }
 }

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/mongodb"
-import Post from "@/models/Post"
+import Reply from "@/models/Reply"
 import { auth } from "@/lib/auth"
 
 /**
- * POST /api/posts/[id]/like - Like or unlike a post
+ * POST /api/replies/[id]/like - Like or unlike a reply
  */
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
@@ -17,50 +17,50 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     await dbConnect()
 
-    const post = await Post.findById(params.id)
+    const reply = await Reply.findById(params.id)
 
-    if (!post) {
-      return NextResponse.json({ error: "Post not found" }, { status: 404 })
+    if (!reply) {
+      return NextResponse.json({ error: "Reply not found" }, { status: 404 })
     }
 
     const userId = session.user.id
 
     // Check if user already liked
-    const likeIndex = post.likes.findIndex(
+    const likeIndex = reply.likes.findIndex(
       (like: any) => like.userId.toString() === userId
     )
 
     // Check if user disliked
-    const dislikeIndex = post.dislikes.findIndex(
+    const dislikeIndex = reply.dislikes.findIndex(
       (dislike: any) => dislike.userId.toString() === userId
     )
 
     // Remove dislike if exists
     if (dislikeIndex !== -1) {
-      post.dislikes.splice(dislikeIndex, 1)
+      reply.dislikes.splice(dislikeIndex, 1)
     }
 
     if (likeIndex !== -1) {
       // Unlike: remove like
-      post.likes.splice(likeIndex, 1)
+      reply.likes.splice(likeIndex, 1)
     } else {
       // Like: add like
-      post.likes.push({ userId, timestamp: new Date() })
+      reply.likes.push({ userId, timestamp: new Date() })
     }
 
-    await post.save()
+    await reply.save()
 
-    const updatedPost = await Post.findById(params.id)
+    const updatedReply = await Reply.findById(params.id)
       .populate("author", "name email role")
       .lean()
 
     return NextResponse.json({
       success: true,
-      post: updatedPost,
-      message: likeIndex !== -1 ? "Post unliked" : "Post liked",
+      reply: updatedReply,
+      message: likeIndex !== -1 ? "Reply unliked" : "Reply liked",
     })
   } catch (error) {
-    console.error("Like post error:", error)
-    return NextResponse.json({ error: "Failed to like post" }, { status: 500 })
+    console.error("Like reply error:", error)
+    return NextResponse.json({ error: "Failed to like reply" }, { status: 500 })
   }
 }
